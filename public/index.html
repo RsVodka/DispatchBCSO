@@ -421,7 +421,7 @@ function renderPatrols() {
     const agentsHTML = patrol.agents.map(agent => `
       <div class="flex justify-between items-center">
         <span>[${agent.badge}] ${agent.name}</span>
-        <button onclick="removeAgentFromPatrol(${id}, '${agent.badge}')" class="ml-2 text-red-500">❌</button>
+        <button onclick="removeAgentFromPatrol(${id}, ${agent.id})" class="ml-2 text-red-500">❌</button> 
       </div>
     `).join('');
 
