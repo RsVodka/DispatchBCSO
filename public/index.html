@@ -297,7 +297,7 @@ function updateVehicleSelect() {
   allVehicles.forEach(vehicle => {
     const option = document.createElement('option');
     option.value = vehicle.id;
-    option.textContent = `${vehicle.model} [${vehicle.plate}]`;
+    option.textContent = `${vehicle.model} ${vehicle.plate}`;
     vehicleSelect.appendChild(option);
   });
 }
