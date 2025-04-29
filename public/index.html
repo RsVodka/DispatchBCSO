@@ -427,7 +427,10 @@ function renderPatrols() {
 
     div.innerHTML = `
       <div class="patrol-agents">
-        <h3 class="font-bold">${patrol.unit_type}</h3>
+        <h3 class="font-bold">
+		${patrol.unit_type}
+	${patrol.agents && patrol.agents[0] ? patrol.agents[0].badge : ''}
+	</h3>
         ${agentsHTML}
       </div>
       <div class="flex flex-col items-center justify-center">
