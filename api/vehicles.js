@@ -1,24 +1,27 @@
-const db = require('../lib/db');
+import { supabase } from '../lib/supabase';
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method === 'GET') {
-    db.all("SELECT * FROM vehicles", (err, rows) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json(rows || []);
-    });
-  } else if (req.method === 'POST') {
+    const { data, error } = await supabase.from('vehicles').select('*');
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  }
+
+  else if (req.method === 'POST') {
     const { model, plate } = req.body;
-    db.run("INSERT INTO vehicles (model, plate) VALUES (?, ?)", [model, plate], function (err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: this.lastID });
-    });
-  } else if (req.method === 'DELETE') {
-    const id = req.query.id;
-    db.run("DELETE FROM vehicles WHERE id = ?", [id], function (err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ success: true });
-    });
-  } else {
+    const { data, error } = await supabase.from('vehicles').insert([{ model, plate }]).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data[0]);
+  }
+
+  else if (req.method === 'DELETE') {
+    const { id } = req.query;
+    const { error } = await supabase.from('vehicles').delete().eq('id', id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true });
+  }
+
+  else {
     res.status(405).end();
   }
 }

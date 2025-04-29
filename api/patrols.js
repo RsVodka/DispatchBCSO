@@ -1,61 +1,59 @@
-const db = require('../lib/db');
+import { supabase } from '../lib/supabase';
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method === 'GET') {
-    db.all(`
-      SELECT patrols.id, patrols.unit_type, patrols.status, vehicles.model as vehicle_model, vehicles.plate as vehicle_plate, agents.id as agent_id, agents.name, agents.badge
-      FROM patrols
-      LEFT JOIN patrol_agents ON patrols.id = patrol_agents.patrol_id
-      LEFT JOIN agents ON patrol_agents.agent_id = agents.id
-      LEFT JOIN vehicles ON patrols.vehicle_id = vehicles.id
-    `, (err, rows) => {
-      if (err) return res.status(500).json({ error: err.message });
+    const { data, error } = await supabase
+      .from('patrols')
+      .select(`
+        id, unit_type, status,
+        vehicles (model, plate),
+        patrol_agents (
+          agents (id, name, badge)
+        )
+      `)
+      .returns();
 
-      const patrols = {};
-      rows.forEach(row => {
-        if (!patrols[row.id]) {
-          patrols[row.id] = {
-            unit_type: row.unit_type,
-            status: row.status,
-            vehicle_model: row.vehicle_model,
-            vehicle_plate: row.vehicle_plate,
-            agents: []
-          };
-        }
-        if (row.agent_id) {
-          patrols[row.id].agents.push({
-            id: row.agent_id,
-            name: row.name,
-            badge: row.badge
-          });
-        }
-      });
+    if (error) return res.status(500).json({ error: error.message });
 
-      res.json(patrols);
+    const patrols = {};
+    data.forEach(p => {
+      patrols[p.id] = {
+        unit_type: p.unit_type,
+        status: p.status,
+        vehicle_model: p.vehicles?.model || '',
+        vehicle_plate: p.vehicles?.plate || '',
+        agents: (p.patrol_agents || []).map(pa => pa.agents)
+      };
     });
+
+    res.json(patrols);
   }
 
   else if (req.method === 'POST') {
     const { unit_type, agentIds, vehicleId } = req.body;
-    db.run("INSERT INTO patrols (unit_type, status, vehicle_id) VALUES (?, ?, ?)", [unit_type, 'Disponible', vehicleId], function (err) {
-      if (err) return res.status(500).json({ error: err.message });
 
-      const patrolId = this.lastID;
-      const stmt = db.prepare("INSERT INTO patrol_agents (patrol_id, agent_id) VALUES (?, ?)");
-      (agentIds || []).forEach(id => stmt.run(patrolId, id));
-      stmt.finalize();
+    const { data: patrolInsert, error: patrolErr } = await supabase
+      .from('patrols')
+      .insert([{ unit_type, status: 'Disponible', vehicle_id: vehicleId }])
+      .select();
 
-      res.json({ id: patrolId });
-    });
+    if (patrolErr) return res.status(500).json({ error: patrolErr.message });
+
+    const patrolId = patrolInsert[0].id;
+    const inserts = agentIds.map(agentId => ({ patrol_id: patrolId, agent_id: agentId }));
+
+    const { error: linkErr } = await supabase.from('patrol_agents').insert(inserts);
+    if (linkErr) return res.status(500).json({ error: linkErr.message });
+
+    res.json({ id: patrolId });
   }
 
   else if (req.method === 'DELETE') {
-    const id = req.query.id;
-    db.run("DELETE FROM patrols WHERE id = ?", [id], function (err) {
-      if (err) return res.status(500).json({ error: err.message });
-      db.run("DELETE FROM patrol_agents WHERE patrol_id = ?", [id]);
-      res.json({ deleted: this.changes });
-    });
+    const { id } = req.query;
+    await supabase.from('patrol_agents').delete().eq('patrol_id', id);
+    const { error } = await supabase.from('patrols').delete().eq('id', id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true });
   }
 
   else {
