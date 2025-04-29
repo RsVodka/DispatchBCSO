@@ -443,7 +443,7 @@ function renderPatrols() {
     </select>
   </div>
   <div class="patrol-vehicle">
-        <span class="font-bold">${patrol.vehicle_model || 'Modèle inconnu'} ${patrol.vehicle_plate || '[Plaque inconnue]'}</span>
+        <span class="font-bold">${patrol.vehicle_model || 'Modèle inconnu'} [${patrol.vehicle_plate?.replace(/\[|\]/g, '') || 'Plaque inconnue'}]</span>
         <button onclick="deletePatrol(${id})" class="text-red-500 mt-2">Supprimer Patrouille ❌</button>
       </div>
     `;
