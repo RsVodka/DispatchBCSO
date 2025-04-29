@@ -1,21 +1,24 @@
-let vehicles = [];
-let nextId = 1;
+const db = require('../lib/db');
 
 export default function handler(req, res) {
   if (req.method === 'GET') {
-    res.status(200).json(vehicles);
+    db.all("SELECT * FROM vehicles", (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows || []);
+    });
   } else if (req.method === 'POST') {
     const { model, plate } = req.body;
-    if (!model || !plate) return res.status(400).json({ message: "Champs requis" });
-
-    const newVehicle = { id: nextId++, model, plate };
-    vehicles.push(newVehicle);
-    res.status(200).json(newVehicle);
+    db.run("INSERT INTO vehicles (model, plate) VALUES (?, ?)", [model, plate], function (err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ id: this.lastID });
+    });
   } else if (req.method === 'DELETE') {
-    const id = parseInt(req.query.id);
-    vehicles = vehicles.filter(v => v.id !== id);
-    res.status(200).json({ message: "Véhicule supprimé" });
+    const id = req.query.id;
+    db.run("DELETE FROM vehicles WHERE id = ?", [id], function (err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true });
+    });
   } else {
-    res.status(405).json({ message: "Méthode non autorisée" });
+    res.status(405).end();
   }
 }

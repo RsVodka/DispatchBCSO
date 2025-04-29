@@ -1,21 +1,24 @@
-let agents = [];
-let nextId = 1;
+const db = require('../lib/db');
 
 export default function handler(req, res) {
   if (req.method === 'GET') {
-    res.status(200).json(agents);
+    db.all("SELECT * FROM agents", (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows || []);
+    });
   } else if (req.method === 'POST') {
     const { name, badge } = req.body;
-    if (!name || !badge) return res.status(400).json({ message: "Champs requis" });
-
-    const newAgent = { id: nextId++, name, badge };
-    agents.push(newAgent);
-    res.status(200).json(newAgent);
+    db.run("INSERT INTO agents (name, badge) VALUES (?, ?)", [name, badge], function (err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ id: this.lastID });
+    });
   } else if (req.method === 'DELETE') {
-    const id = parseInt(req.query.id);
-    agents = agents.filter(a => a.id !== id);
-    res.status(200).json({ message: "Agent supprimé" });
+    const id = req.query.id;
+    db.run("DELETE FROM agents WHERE id = ?", [id], function (err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ deleted: this.changes });
+    });
   } else {
-    res.status(405).json({ message: "Méthode non autorisée" });
+    res.status(405).end();
   }
 }
