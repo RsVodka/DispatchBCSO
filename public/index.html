@@ -77,7 +77,8 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  background-color: white;
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
   padding: 16px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -429,7 +430,19 @@ function renderPatrols() {
         <h3 class="font-bold">${patrol.unit_type}</h3>
         ${agentsHTML}
       </div>
-      <div class="patrol-vehicle">
+      <div class="flex flex-col items-center justify-center">
+    <select onchange="updateSector(${id}, this.value)" class="text-black bg-white p-1 rounded my-2">
+      <option value="">Définir un secteur</option>
+      <option value="Secteur 1">Secteur 1</option>
+      <option value="Secteur 2">Secteur 2</option>
+      <option value="Secteur 3">Secteur 3</option>
+      <option value="Secteur 4">Secteur 4</option>
+      <option value="Secteur 5">Secteur 5</option>
+      <option value="Secteur 6">Secteur 6</option>
+      <option value="Hors juridiction">Hors juridiction</option>
+    </select>
+  </div>
+  <div class="patrol-vehicle">
         <span class="font-bold">${patrol.vehicle_model || 'Modèle inconnu'} [${patrol.vehicle_plate || 'Plaque inconnue'}]</span>
         <button onclick="deletePatrol(${id})" class="text-red-500 mt-2">Supprimer Patrouille ❌</button>
       </div>
@@ -461,6 +474,11 @@ async function deletePatrol(id) {
   await fetch(`/api/patrols?id=${id}`, { method: 'DELETE' });
   fetchPatrols();
   fetchAgents();
+}
+
+
+function updateSector(patrolId, secteur) {
+  alert(`📍 Patrouille ${patrolId} assignée à ${secteur}`);
 }
 
 // Initialisation
