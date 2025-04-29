@@ -356,18 +356,17 @@ document.getElementById('agentSelect2').addEventListener('change', () => {
   updateAgentSelects();
 });
 
-// Supprimer un agent
 async function deleteAgent(id) {
   if (confirm("Supprimer cet agent ?")) {
-    await fetch(`/api/agents/${id}`, { method: 'DELETE' });
+    await fetch(`/api/agents?id=${id}`, { method: 'DELETE' });
     fetchAgents();
   }
 }
 
-// Supprimer un véhicule
+
 async function deleteVehicle(id) {
   if (confirm("Supprimer ce véhicule ?")) {
-    await fetch(`/api/vehicles/${id}`, { method: 'DELETE' });
+    await fetch(`/api/vehicles?id=${id}`, { method: 'DELETE' });
     fetchVehicles();
   }
 }
@@ -447,7 +446,10 @@ async function removeAgentFromPatrol(patrolId, badge) {
   const agent = allAgents.find(a => a.badge === badge);
   if (!agent) return;
 
-  await fetch(`/api/patrols/${patrolId}/agents/${agent.id}`, { method: 'DELETE' });
+  await fetch(`/api/patrols/remove-agent?patrolId=${patrolId}&agentId=${agent.id}`, {
+    method: 'DELETE'
+  });
+
   fetchPatrols();
   fetchAgents();
 }
@@ -456,7 +458,7 @@ async function removeAgentFromPatrol(patrolId, badge) {
 async function deletePatrol(id) {
   if (!confirm("Supprimer cette patrouille complètement ?")) return;
 
-  await fetch(`/api/patrols/${id}`, { method: 'DELETE' });
+  await fetch(`/api/patrols?id=${id}`, { method: 'DELETE' });
   fetchPatrols();
   fetchAgents();
 }

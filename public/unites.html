@@ -301,11 +301,21 @@
   saveAgentToLocalStorage(unit);
 }
 
-  // Supprimer un agent d'une unité
   function removeAgent(unit, button) {
-    const agentItem = button.parentElement;
-    agentItem.remove();
-  }
+	const agentItem = button.parentElement;
+	agentItem.remove();
+
+  // 🔄 Mettre à jour le localStorage après suppression
+	const agentList = document.getElementById(`${unit}-list`);
+	const agents = [];
+
+	agentList.querySelectorAll('.agent-item').forEach(item => {
+    agents.push(item.querySelector('span').textContent);
+  });
+
+  localStorage.setItem(unit, JSON.stringify(agents));
+}
+
   
   // Charger les agents depuis le localStorage
 function loadAgentsFromLocalStorage() {
