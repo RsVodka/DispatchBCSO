@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Dispatch BCSO</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+  position: relative;
+  background-color: #4E3B31;
+  background-image: url('BCSO_Logo.png');
+  background-size: 600px;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-attachment: fixed;
+}
+    
+    .grid {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .dropdown {
+      position: relative;
+      width: 100%;
+    }
+    
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: #4E3B31;
+      width: 100%;
+      max-height: 200px;
+      overflow-y: auto;
+      box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      z-index: 9999;
+      animation: dropdown-slide 0.3s ease forwards;
+      transform-origin: top center;
+    }
+    
+    .dropdown:hover .dropdown-content {
+      display: block;
+    }
+    
+    .dropdown-item {
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .dropdown-item:last-child {
+      border-bottom: none;
+    }
+    
+    .dropdown-item:hover {
+      background-color: #f1f5f9;
+    }
+    
+    @keyframes dropdown-slide {
+      0% {
+        opacity: 0;
+        transform: translateY(-10px) scaleY(0.8);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scaleY(1);
+      }
+    }
+	/* Amélioration affichage Patrouilles Actives */
+.patrol-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background-color: white;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 16px;
+}
+
+.patrol-agents {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.patrol-vehicle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  gap: 8px;
+}
+select option:disabled {
+  color: gray;
+  background-color: #f8f9fa;
+}
+.transparent-card {
+  background-color: rgba(0, 0, 0, 0.5); /* Noir semi-transparent */
+  backdrop-filter: blur(4px); /* Ajoute un léger flou derrière */
+  border-radius: 12px;
+  padding: 20px;
+}
+  </style>
+</head>
+<body class="p-8">
+
+<header class="flex justify-between items-center mb-6">
+
+  <!-- Menu de navigation -->
+  <nav>
+    <ul class="flex space-x-6">
+      <li><a href="/" class="text-white hover:text-gray-400">Dispatch</a></li>
+      <li><a href="/unites.html" class="text-white hover:text-gray-400">Unités</a></li>
+    </ul>
+  </nav>
+</header>
+
+<h1 class="text-3xl font-bold mb-6">📻 Dispatch BCSO</h1>
+
+<div class="grid grid-cols-2 gap-4">
+
+  <!-- Ajouter un agent -->
+  <div class="scale-90">
+    <h2 class="text-2xl font-semibold mb-2">Ajouter un agent</h2>
+    <form id="agentForm" class="transparent-card">
+      <input type="text" id="name" placeholder="Nom" class="border p-2 m-1 w-full" required>
+      <input type="text" id="badge" placeholder="Matricule" class="border p-2 m-1 w-full" required>
+      <button type="submit" class="bg-green-500 text-white p-2 rounded mt-2 w-full">Ajouter Agent</button>
+    </form>
+    <div class="dropdown bg-white p-2 mt-4 rounded shadow">
+      <button class="w-full text-left">Liste des Agents ▼</button>
+      <div id="agentsList" class="dropdown-content"></div>
+    </div>
+  </div>
+
+  <!-- Ajouter un véhicule -->
+  <div class="scale-90">
+    <h2 class="text-2xl font-semibold mb-2">Ajouter un véhicule</h2>
+    <form id="vehicleForm" class="transparent-card">
+      <input type="text" id="model" placeholder="Modèle" class="border p-2 m-1 w-full" required>
+      <input type="text" id="plate" placeholder="Plaque" class="border p-2 m-1 w-full" required>
+      <button type="submit" class="bg-green-500 text-white p-2 rounded mt-2 w-full">Ajouter Véhicule</button>
+    </form>
+    <div class="dropdown bg-white p-2 mt-4 rounded shadow">
+      <button class="w-full text-left">Liste des Véhicules ▼</button>
+      <div id="vehiclesList" class="dropdown-content"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Créer une patrouille -->
+<div class="mt-8 scale-90">
+  <h2 class="text-2xl font-semibold mb-2">Créer une patrouille</h2>
+  <form id="patrolForm" class="transparent-card space-y-4">
+    <select id="unit_type" class="border p-2 w-full">
+      <option value="">Unité Spéciale (facultatif)</option>
+      <option value="K9">K9</option>
+      <option value="SRT">SRT</option>
+      <option value="SIB">SIB</option>
+    </select>
+
+    <div class="space-y-2">
+      <select id="agentSelect1" class="border p-2 w-full" required>
+        <option value="">Sélectionner 1er agent</option>
+      </select>
+
+      <select id="agentSelect2" class="border p-2 w-full hidden">
+        <option value="">Sélectionner 2ème agent (optionnel)</option>
+      </select>
+
+      <select id="agentSelect3" class="border p-2 w-full hidden">
+        <option value="">Sélectionner 3ème agent (optionnel)</option>
+      </select>
+    </div>
+
+    <select id="vehicleSelect" class="border p-2 w-full" required>
+      <option value="">Sélectionner Véhicule</option>
+    </select>
+
+    <button type="submit" class="bg-green-500 text-white p-2 rounded mt-2 w-full">Ajouter Agent</button>
+  </form>
+</div>
+
+<!-- Patrouilles Actives -->
+<div class="mt-8">
+  <h2 class="text-2xl font-semibold mb-2">Patrouilles Actives</h2>
+  <div class="transparent-card mt-4">
+  <div id="patrols" class="grid gap-4"></div>
+</div>
+
+<!-- Ton JavaScript complet commence ici -->
+<script>
+let allAgents = [];
+let allVehicles = [];
+let allPatrols = [];
+
+// Récupérer tous les agents
+async function fetchAgents() {
+  const res = await fetch('/api/agents');
+  allAgents = await res.json();
+  renderAgentsDropdown();
+  updateAgentSelects();
+}
+
+// Récupérer tous les véhicules
+async function fetchVehicles() {
+  const res = await fetch('/api/vehicles');
+  allVehicles = await res.json();
+  renderVehiclesDropdown();
+  updateVehicleSelect();
+}
+
+// Récupérer toutes les patrouilles
+async function fetchPatrols() {
+  const res = await fetch('/api/patrols');
+  allPatrols = await res.json();
+  renderPatrols();
+}
+
+// Afficher les agents dans le menu déroulant
+function renderAgentsDropdown() {
+  const agentsList = document.getElementById('agentsList');
+  agentsList.innerHTML = '';
+  allAgents.forEach(agent => {
+    const div = document.createElement('div');
+    div.className = "dropdown-item";
+    div.innerHTML = `
+      <span>[${agent.badge}] ${agent.name}</span>
+      <button onclick="deleteAgent(${agent.id})" class="text-red-500 ml-2">❌</button>
+    `;
+    agentsList.appendChild(div);
+  });
+}
+
+// Afficher les véhicules dans le menu déroulant
+function renderVehiclesDropdown() {
+  const vehiclesList = document.getElementById('vehiclesList');
+  vehiclesList.innerHTML = '';
+  allVehicles.forEach(vehicle => {
+    const div = document.createElement('div');
+    div.className = "dropdown-item";
+    div.innerHTML = `
+      <span>${vehicle.model} [${vehicle.plate}]</span>
+      <button onclick="deleteVehicle(${vehicle.id})" class="text-red-500 ml-2">❌</button>
+    `;
+    vehiclesList.appendChild(div);
+  });
+}
+
+// Mettre à jour les menus de sélection d'agents
+function updateAgentSelects() {
+  const selects = [document.getElementById('agentSelect1'), document.getElementById('agentSelect2'), document.getElementById('agentSelect3')];
+  const selectedIds = selects.map(s => s.value).filter(Boolean);
+
+  // ➔ Trouver tous les badges utilisés dans les patrouilles actives
+  const usedBadges = [];
+  Object.values(allPatrols).forEach(patrol => {
+    patrol.agents.forEach(agent => {
+      usedBadges.push(agent.badge);
+    });
+  });
+
+  selects.forEach(select => {
+    const prev = select.value;
+    select.innerHTML = '<option value="">Sélectionner agent</option>';
+
+    allAgents.forEach(agent => {
+      const option = document.createElement('option');
+      option.value = agent.id;
+      option.textContent = `[${agent.badge}] ${agent.name}`;
+
+      // ➔ Désactiver si agent est utilisé ailleurs
+      if (usedBadges.includes(agent.badge) && prev !== agent.id.toString()) {
+        option.disabled = true;
+      }
+
+      select.appendChild(option);
+    });
+
+    select.value = prev;
+  });
+}
+
+// Mettre à jour les menus de sélection de véhicules
+function updateVehicleSelect() {
+  const vehicleSelect = document.getElementById('vehicleSelect');
+  vehicleSelect.innerHTML = '<option value="">Sélectionner Véhicule</option>';
+  allVehicles.forEach(vehicle => {
+    const option = document.createElement('option');
+    option.value = vehicle.id;
+    option.textContent = `${vehicle.model} [${vehicle.plate}]`;
+    vehicleSelect.appendChild(option);
+  });
+}
+
+// Ajouter un agent
+document.getElementById('agentForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = document.getElementById('name').value;
+  const badge = document.getElementById('badge').value;
+  
+  if (allAgents.find(a => a.badge === badge)) {
+    alert("Ce matricule existe déjà !");
+    return;
+  }
+
+  await fetch('/api/agents', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, badge })
+  });
+
+  await fetchAgents(); // 🔥 Recharge après ajout
+  e.target.reset();
+});
+
+// Ajouter un véhicule
+document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const model = document.getElementById('model').value;
+  const plate = document.getElementById('plate').value;
+  
+  if (allVehicles.find(v => v.plate === plate)) {
+    alert("Cette plaque existe déjà !");
+    return;
+  }
+
+  await fetch('/api/vehicles', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, plate })
+  });
+
+  await fetchVehicles(); // 🔥 Recharge après ajout
+  e.target.reset();
+});
+
+// Ouvrir/fermer les menus déroulants au hover (déjà géré en CSS hover)
+
+// Ajout progressif de l'agent 2 et 3
+document.getElementById('agentSelect1').addEventListener('change', () => {
+  document.getElementById('agentSelect2').classList.toggle('hidden', !document.getElementById('agentSelect1').value);
+  updateAgentSelects();
+});
+
+document.getElementById('agentSelect2').addEventListener('change', () => {
+  document.getElementById('agentSelect3').classList.toggle('hidden', !document.getElementById('agentSelect2').value);
+  updateAgentSelects();
+});
+
+// Supprimer un agent
+async function deleteAgent(id) {
+  if (confirm("Supprimer cet agent ?")) {
+    await fetch(`/api/agents/${id}`, { method: 'DELETE' });
+    fetchAgents();
+  }
+}
+
+// Supprimer un véhicule
+async function deleteVehicle(id) {
+  if (confirm("Supprimer ce véhicule ?")) {
+    await fetch(`/api/vehicles/${id}`, { method: 'DELETE' });
+    fetchVehicles();
+  }
+}
+
+// Création d'une patrouille
+document.getElementById('patrolForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  let unit_type = document.getElementById('unit_type').value;
+  const agents = [
+    document.getElementById('agentSelect1').value,
+    document.getElementById('agentSelect2').value,
+    document.getElementById('agentSelect3').value
+  ].filter(Boolean);
+  const vehicleId = document.getElementById('vehicleSelect').value;
+
+  if (!unit_type) {
+    if (agents.length === 1) unit_type = 'Lincoln';
+    else if (agents.length === 2) unit_type = 'Adam';
+    else if (agents.length === 3) unit_type = 'Tango';
+  }
+
+  await fetch('/api/patrols', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ unit_type, agentIds: agents, vehicleId })
+  });
+
+  fetchPatrols();
+  fetchAgents();
+  fetchVehicles();
+  // Remettre les sélections à zéro
+document.getElementById('unit_type').value = "";
+document.getElementById('agentSelect1').value = "";
+document.getElementById('agentSelect2').value = "";
+document.getElementById('agentSelect2').classList.add('hidden');
+document.getElementById('agentSelect3').value = "";
+document.getElementById('agentSelect3').classList.add('hidden');
+document.getElementById('vehicleSelect').value = "";
+});
+
+// Affichage des patrouilles
+function renderPatrols() {
+  const patrolsDiv = document.getElementById('patrols');
+  patrolsDiv.innerHTML = '';
+
+  Object.keys(allPatrols).forEach(id => {
+    const patrol = allPatrols[id];
+    const div = document.createElement('div');
+    div.className = "patrol-card"; // <-- Ici changement important
+
+    const agentsHTML = patrol.agents.map(agent => `
+      <div class="flex justify-between items-center">
+        <span>[${agent.badge}] ${agent.name}</span>
+        <button onclick="removeAgentFromPatrol(${id}, '${agent.badge}')" class="ml-2 text-red-500">❌</button>
+      </div>
+    `).join('');
+
+    div.innerHTML = `
+      <div class="patrol-agents">
+        <h3 class="font-bold">${patrol.unit_type}</h3>
+        ${agentsHTML}
+      </div>
+      <div class="patrol-vehicle">
+        <span class="font-bold">${patrol.vehicle_model || 'Modèle inconnu'} [${patrol.vehicle_plate || 'Plaque inconnue'}]</span>
+        <button onclick="deletePatrol(${id})" class="text-red-500 mt-2">Supprimer Patrouille ❌</button>
+      </div>
+    `;
+
+    patrolsDiv.appendChild(div);
+  });
+}
+
+// Retirer un agent d'une patrouille
+async function removeAgentFromPatrol(patrolId, badge) {
+  if (!confirm("Retirer cet agent de la patrouille ?")) return;
+  
+  const agent = allAgents.find(a => a.badge === badge);
+  if (!agent) return;
+
+  await fetch(`/api/patrols/${patrolId}/agents/${agent.id}`, { method: 'DELETE' });
+  fetchPatrols();
+  fetchAgents();
+}
+
+// Supprimer une patrouille
+async function deletePatrol(id) {
+  if (!confirm("Supprimer cette patrouille complètement ?")) return;
+
+  await fetch(`/api/patrols/${id}`, { method: 'DELETE' });
+  fetchPatrols();
+  fetchAgents();
+}
+
+// Initialisation
+fetchAgents();
+fetchVehicles();
+fetchPatrols();
+</script>
+
+
+</body>
+</html>

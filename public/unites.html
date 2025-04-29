@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Unités Dispatch BCSO</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      position: relative;
+      background-color: #4E3B31;
+      background-image: url('BCSO_Logo.png');
+      background-size: 600px;
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-attachment: fixed;
+      color: white;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr); /* 3 cases par ligne */
+      gap: 20px;
+    }
+
+    .unit-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start; /* Aligner les éléments vers le haut */
+      align-items: center;
+      text-align: center;
+      height: auto;
+      padding: 10px;
+      min-height: 250px; /* Taille minimale de la case */
+      margin: 10px;
+      border-radius: 12px;
+      background-color: #4E3B31; /* Fond des unités */
+    }
+
+    .unit-card h3 {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .unit-card select {
+      margin-bottom: 12px;
+    }
+
+    .unit-card button {
+      margin-top: 12px;
+      width: 100%;
+    }
+
+    .agent-list {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .agent-item {
+	display: flex; /* Aligner les éléments horizontalement */
+	justify-content: center; /* Espacer le texte (nom de l'agent) et la croix */
+	align-items: center; /* Aligner verticalement la croix et le texte */
+	background-color: transparent; /* Retirer le fond gris */
+	padding: 3px 10px; /* Un peu d'espace autour du texte */
+	border-radius: 8px; /* Coins arrondis */
+	font-size: 1.0rem; /* Taille du texte */
+	color: white; /* Texte en blanc */
+	height: 30px; /* Fixer la hauteur des éléments pour rapprocher les noms */
+	}
+
+    .agent-item button {
+	background-color: transparent;
+	color: red;
+	border: none;
+	font-size: 1.1rem; /* Agrandir la croix pour qu'elle soit plus visible */
+	cursor: pointer;
+	margin-left: 10px; /* Espacer légèrement la croix du texte */
+	display: flex;
+	align-items: center; /* Aligner la croix avec le texte */
+	}
+	
+	.agent-item span {
+	display: inline-block;
+	width: calc(100% - 40px); /* Réduit la largeur du texte pour laisser de la place à la croix */
+	word-wrap: break-word; /* Permet de briser les mots longs */
+	text-align: center; /* Centrer le texte */
+	}
+
+    select {
+	background-color: #333; /* Fond sombre */
+	color: black; /* Texte noir dans le menu déroulant */
+	border-radius: 8px; /* Coins arrondis */
+	padding: 8px; /* Un peu d'espace autour du texte */
+	width: 100%; /* Prendre toute la largeur disponible */
+	font-size: 0.8rem; /* Taille du texte */
+	}
+	
+	/* Modifier la couleur du texte lors de la sélection d'une option */
+	select:focus {
+	outline: none; /* Supprimer le contour bleu à la sélection */
+	color: black; /* Assurez-vous que le texte reste noir lorsqu'il est sélectionné */
+	}
+
+    input, select {
+      background-color: #f8f9fa;
+      color: #333;
+      border: 1px solid #ddd;
+      padding: 8px;
+      border-radius: 8px;
+      width: 100%;
+      font-size: 0.9rem;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #4E3B31;
+    }
+
+    .agent-item span {
+      display: inline-block;
+      width: calc(100% - 30px); /* Réduit la largeur de l'élément texte */
+      word-wrap: break-word; /* Permet de briser les mots longs */
+    }
+
+  </style>
+</head>
+<body class="p-8">
+
+<header class="flex justify-between items-center mb-6">
+  <!-- Menu de navigation -->
+  <nav>
+    <ul class="flex space-x-6">
+      <li><a href="/" class="text-white hover:text-gray-400">Dispatch</a></li>
+      <li><a href="/unites.html" class="text-white hover:text-gray-400">Unités</a></li>
+    </ul>
+  </nav>
+</header>
+
+<h1 class="text-3xl font-bold mb-6">Unités BCSO</h1>
+
+<!-- Ajouter des agents dans les unités -->
+<h2 class="text-2xl font-semibold mb-2">Ajouter des agents dans les unités</h2>
+<div class="grid grid-cols-3 gap-4 mt-6">
+
+  <!-- Unité SIB -->
+  <div class="unit-card" id="SIB-card">
+    <h3 class="font-bold">SIB</h3>
+    <select id="SIB-select">
+      <option value="">Sélectionner un agent</option>
+      <!-- Les options seront insérées ici -->
+    </select>
+    <button class="bg-green-500 text-white p-2 rounded mt-2 w-full" onclick="addAgentToUnit('SIB')">Ajouter Agent</button>
+    <div class="agent-list" id="SIB-list">
+      <!-- Les agents de SIB seront listés ici -->
+    </div>
+  </div>
+  
+  <!-- Unité SRT -->
+  <div class="unit-card" id="SRT-card">
+    <h3 class="font-bold">SRT</h3>
+    <select id="SRT-select">
+      <option value="">Sélectionner un agent</option>
+      <!-- Les options seront insérées ici -->
+    </select>
+    <button class="bg-green-500 text-white p-2 rounded mt-2 w-full" onclick="addAgentToUnit('SRT')">Ajouter Agent</button>
+    <div class="agent-list" id="SRT-list">
+      <!-- Les agents de SRT seront listés ici -->
+    </div>
+  </div>
+  
+  <!-- Unité K9 -->
+  <div class="unit-card" id="K9-card">
+    <h3 class="font-bold">K9</h3>
+    <select id="K9-select">
+      <option value="">Sélectionner un agent</option>
+      <!-- Les options seront insérées ici -->
+    </select>
+    <button class="bg-green-500 text-white p-2 rounded mt-2 w-full" onclick="addAgentToUnit('K9')">Ajouter Agent</button>
+    <div class="agent-list" id="K9-list">
+      <!-- Les agents de K9 seront listés ici -->
+    </div>
+  </div>
+
+  <!-- Unité William -->
+  <div class="unit-card" id="William-card">
+    <h3 class="font-bold">William</h3>
+    <select id="William-select">
+      <option value="">Sélectionner un agent</option>
+      <!-- Les options seront insérées ici -->
+    </select>
+    <button class="bg-green-500 text-white p-2 rounded mt-2 w-full" onclick="addAgentToUnit('William')">Ajouter Agent</button>
+    <div class="agent-list" id="William-list">
+      <!-- Les agents de William seront listés ici -->
+    </div>
+  </div>
+  
+  <!-- Unité HSU -->
+  <div class="unit-card" id="HSU-card">
+    <h3 class="font-bold">HSU</h3>
+    <select id="HSU-select">
+      <option value="">Sélectionner un agent</option>
+      <!-- Les options seront insérées ici -->
+    </select>
+    <button class="bg-green-500 text-white p-2 rounded mt-2 w-full" onclick="addAgentToUnit('HSU')">Ajouter Agent</button>
+    <div class="agent-list" id="HSU-list">
+      <!-- Les agents de HSU seront listés ici -->
+    </div>
+  </div>
+  
+  <!-- Unité MU -->
+  <div class="unit-card" id="MU-card">
+    <h3 class="font-bold">MU</h3>
+    <select id="MU-select">
+      <option value="">Sélectionner un agent</option>
+      <!-- Les options seront insérées ici -->
+    </select>
+    <button class="bg-green-500 text-white p-2 rounded mt-2 w-full" onclick="addAgentToUnit('MU')">Ajouter Agent</button>
+    <div class="agent-list" id="MU-list">
+      <!-- Les agents de MU seront listés ici -->
+    </div>
+  </div>
+  
+  <!-- Unité ASU -->
+  <div class="unit-card" id="ASU-card">
+    <h3 class="font-bold">ASU</h3>
+    <select id="ASU-select">
+      <option value="">Sélectionner un agent</option>
+      <!-- Les options seront insérées ici -->
+    </select>
+    <button class="bg-green-500 text-white p-2 rounded mt-2 w-full" onclick="addAgentToUnit('ASU')">Ajouter Agent</button>
+    <div class="agent-list" id="ASU-list">
+      <!-- Les agents de ASU seront listés ici -->
+    </div>
+  </div>
+</div>
+
+<script>
+  let allAgents = [];
+
+  // Récupérer les agents depuis l'API
+  async function fetchAgents() {
+    const res = await fetch('/api/agents');
+    allAgents = await res.json();
+    renderAgentsDropdown();
+  }
+
+  // Fonction pour afficher les agents dans le menu déroulant de chaque unité
+  function renderAgentsDropdown() {
+    const selects = [
+      'SIB-select', 'SRT-select', 'K9-select', 'William-select', 
+      'HSU-select', 'MU-select', 'ASU-select'
+    ];
+
+    selects.forEach(id => {
+      const select = document.getElementById(id);
+      select.innerHTML = '<option value="">Sélectionner un agent</option>';
+
+      allAgents.forEach(agent => {
+        const option = document.createElement('option');
+        option.value = agent.id;
+        option.textContent = `[${agent.badge}] ${agent.name}`;
+        select.appendChild(option);
+      });
+    });
+  }
+
+  function addAgentToUnit(unit) {
+	const select = document.getElementById(`${unit}-select`);
+	const agentId = select.value;
+	const agent = allAgents.find(a => a.id == agentId);
+
+	if (!agent) {
+    alert("Veuillez sélectionner un agent.");
+    return;
+	}
+
+	// Vérifier si l'agent est déjà dans l'unité
+	const agentList = document.getElementById(`${unit}-list`);
+	const existingAgent = Array.from(agentList.children).some(agentItem => {
+    return agentItem.querySelector('span').textContent.includes(agent.badge);
+  });
+
+  if (existingAgent) {
+    alert(`L'agent avec le matricule [${agent.badge}] existe déjà dans l'unité ${unit}.`);
+    return;
+  }
+
+  const agentItem = document.createElement('div');
+  agentItem.className = "agent-item";
+  agentItem.innerHTML = `
+    <span>[${agent.badge}] ${agent.name}</span>
+    <button onclick="removeAgent('${unit}', this)">❌</button>
+  `;
+  agentList.appendChild(agentItem);
+
+  // Sauvegarder l'agent dans le localStorage
+  saveAgentToLocalStorage(unit);
+}
+
+  // Supprimer un agent d'une unité
+  function removeAgent(unit, button) {
+    const agentItem = button.parentElement;
+    agentItem.remove();
+  }
+  
+  // Charger les agents depuis le localStorage
+function loadAgentsFromLocalStorage() {
+  const units = ['SIB', 'SRT', 'K9', 'William', 'HSU', 'MU', 'ASU'];
+
+  units.forEach(unit => {
+    const savedAgents = JSON.parse(localStorage.getItem(unit));
+    if (savedAgents && savedAgents.length > 0) {
+      const agentList = document.getElementById(`${unit}-list`);
+      savedAgents.forEach(agentText => {
+        const agentItem = document.createElement('div');
+        agentItem.className = "agent-item";
+        agentItem.innerHTML = `
+          <span>${agentText}</span>
+          <button onclick="removeAgent('${unit}', this)">❌</button>
+        `;
+        agentList.appendChild(agentItem);
+      });
+    }
+  });
+}
+
+  // Charger les agents au démarrage
+	window.onload = function() {
+	fetchAgents();  // Charger les agents depuis l'API
+	loadAgentsFromLocalStorage();  // Charger les agents du localStorage
+};
+
+  
+  // Sauvegarder dans le localStorage après ajout
+function saveAgentToLocalStorage(unit) {
+  const agentList = document.getElementById(`${unit}-list`);
+  const agents = [];
+
+  agentList.querySelectorAll('.agent-item').forEach(item => {
+    agents.push(item.querySelector('span').textContent);
+  });
+
+  localStorage.setItem(unit, JSON.stringify(agents));
+}
+
+
+</script>
+
+</body>
+</html>
+
+
+
