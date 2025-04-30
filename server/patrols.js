@@ -59,14 +59,16 @@ router.get('/', async (req, res) => {
 router.put('/', async (req, res) => {
   const { id, updates } = req.body;
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('patrols')
     .update(updates)
-    .eq('id', id);
+    .eq('id', id)
+    .select(); // ✅ renvoyer les données mises à jour
 
   if (error) return res.status(500).json({ error: error.message });
-  res.json({ success: true });
+  res.json(data[0]);
 });
+
 
 // 🔻 Créer une nouvelle patrouille
 router.post('/', async (req, res) => {

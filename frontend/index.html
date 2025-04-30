@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Dispatch BCSO</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.3/dist/umd/supabase.min.js"></script>
   <style>
     body {
 	  background-color: #4E3B31;
@@ -205,46 +204,6 @@ select option:disabled {
 </div>
 
 <!-- Ton JavaScript complet commence ici -->
-<!-- 1. Charger la bibliothèque Socket.IO -->
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-
-<!-- 2. Ensuite, ton code Socket.IO -->
-<script>
-  const socket = io("https://dispatchbcso.onrender.com"); // ✅ URL Render
-
-  socket.on("agent_ajoute", (agent) => {
-    ajouterAgentDansLeDOM(agent);
-  });
-  socket.on("agent_supprime", (agentId) => {
-    retirerAgentDuDOM(agentId);
-  });
-  socket.on("vehicule_ajoute", (vehicle) => {
-    ajouterVehiculeDansLeDOM(vehicle);
-  });
-  socket.on("vehicule_supprime", (vehicleId) => {
-    retirerVehiculeDuDOM(vehicleId);
-  });
-  socket.on("patrouille_creee", (patrol) => {
-    allPatrols[patrol.id] = patrol;
-    renderPatrols();
-  });
-  socket.on("patrouille_supprimee", (patrolId) => {
-    delete allPatrols[patrolId];
-    renderPatrols();
-  });
-  socket.on("agent_retire_patrouille", async ({ patrolId, agentId }) => {
-    await fetchPatrols();
-  });
-  socket.on("secteur_mis_a_jour", ({ patrolId, secteur }) => {
-    localStorage.setItem(`secteur_${patrolId}`, secteur);
-    renderPatrols();
-  });
-  socket.on("statut_mis_a_jour", ({ patrolId, statut }) => {
-    localStorage.setItem(`statut_${patrolId}`, statut);
-    renderPatrols();
-  });
-</script>
-
 <script>
 let allAgents = [];
 let allVehicles = [];
@@ -394,10 +353,6 @@ document.getElementById('agentForm').addEventListener('submit', async (e) => {
     body: JSON.stringify({ name, badge })
   });
   await fetchAgents();
-  socket.emit("agent_ajoute", {
-  badge,
-  name
-});
   e.target.reset();
 });
 
@@ -415,10 +370,6 @@ document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
     body: JSON.stringify({ model, plate })
   });
   await fetchVehicles();
-  socket.emit("vehicule_ajoute", {
-  model,
-  plate
-});
   e.target.reset();
 });
 
@@ -435,16 +386,12 @@ document.getElementById('agentSelect2').addEventListener('change', () => {
 async function deleteAgent(id) {
   if (confirm("Supprimer cet agent ?")) {
     await fetch(`/api/agents?id=${id}`, { method: 'DELETE' });
-    socket.emit("agent_supprime", id); // cette ligne était mal placée
-    fetchAgents();
   }
 }
 
 async function deleteVehicle(id) {
   if (confirm("Supprimer ce véhicule ?")) {
     await fetch(`/api/vehicles?id=${id}`, { method: 'DELETE' });
-    socket.emit("vehicule_supprime", id); // ← ajout
-    fetchVehicles();
   }
 }
 
@@ -469,7 +416,6 @@ document.getElementById('patrolForm').addEventListener('submit', async (e) => {
   });
 const newPatrol = await res.json(); // l'API doit retourner la patrouille
 
-socket.emit("patrouille_creee", newPatrol); // ← on envoie aux autres
 await fetchPatrols();
   fetchAgents();
   fetchVehicles();
@@ -556,7 +502,6 @@ async function removeAgentFromPatrol(patrolId, agentId) {
   if (!confirm("Retirer cet agent de la patrouille ?")) return;
 
   await fetch(`/api/patrols/remove-agent?patrolId=${patrolId}&agentId=${agentId}`, { method: 'DELETE' });
-  socket.emit("agent_retire_patrouille", { patrolId, agentId });
   
   // Recharge les patrouilles après suppression
   await fetchPatrols();
@@ -571,8 +516,6 @@ async function removeAgentFromPatrol(patrolId, agentId) {
 }
 
 async function updateStatus(patrolId, statut) {
-  localStorage.setItem(`statut_${patrolId}`, statut);
-  socket.emit("statut_mis_a_jour", { patrolId, statut });
 
   await updatePatrolField(patrolId, { status: statut });
 }
@@ -580,7 +523,6 @@ async function updateStatus(patrolId, statut) {
 async function deletePatrol(id) {
   if (!confirm("Supprimer cette patrouille complètement ?")) return;
   await fetch(`/api/patrols?id=${id}`, { method: 'DELETE' });
-  socket.emit("patrouille_supprimee", id); // 🔥 on notifie les autres
   fetchPatrols();
   fetchAgents();
 }
@@ -601,154 +543,9 @@ async function updateSector(patrolId, secteur) {
     body: JSON.stringify({ id: patrolId, updates: { sector: secteur } })
   });
 
-  // ✅ 2. Mise à jour locale + diffusion
-  localStorage.setItem(`secteur_${patrolId}`, secteur);
-  socket.emit("secteur_mis_a_jour", { patrolId, secteur });
-}
-
 fetchAgents();
 fetchVehicles();
 fetchPatrols();
-</script>
-
-<script>
-  const supabase = window.supabase.createClient(
-    'https://bxmchfiugxxgcejxmohr.supabase.co', // ton URL
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4bWNoZml1Z3h4Z2Nlanhtb2hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NDczMzgsImV4cCI6MjA2MTUyMzMzOH0.J90kmL65e-gJIyOTtd3tIB9q_vxqoFLR80lDqY-l3Mw'
-  );
-
-  // Realtime: écouter les nouveaux agents ajoutés
-  supabase
-  .channel('realtime:agents')
-  .on('postgres_changes', {
-    event: 'INSERT',
-    schema: 'public',
-    table: 'agents',
-  }, (payload) => {
-    console.log('📡 Agent ajouté :', payload.new);
-    ajouterAgentDansLeDOM(payload.new);
-  })
-  .on('postgres_changes', {
-    event: 'DELETE',
-    schema: 'public',
-    table: 'agents',
-  }, (payload) => {
-    console.log('❌ Agent supprimé :', payload.old);
-    retirerAgentDuDOM(payload.old.id);
-  })
-  .on('postgres_changes', {
-    event: 'UPDATE',
-    schema: 'public',
-    table: 'agents',
-  }, (payload) => {
-    console.log('✏️ Agent mis à jour :', payload.new);
-    fetchAgents(); // ou une fonction plus précise si tu veux juste mettre à jour l'élément modifié
-  })
-  .subscribe();
-</script>
-
-<script>
-  supabase
-    .channel('realtime:vehicles')
-    .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'vehicles',
-    }, (payload) => {
-      console.log('📡 Véhicule ajouté :', payload.new);
-      ajouterVehiculeDansLeDOM(payload.new);
-    })
-    .on('postgres_changes', {
-      event: 'DELETE',
-      schema: 'public',
-      table: 'vehicles',
-    }, (payload) => {
-      console.log('❌ Véhicule supprimé :', payload.old);
-      retirerVehiculeDuDOM(payload.old.id);
-    })
-    .on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'vehicles',
-    }, (payload) => {
-      console.log('✏️ Véhicule mis à jour :', payload.new);
-      fetchVehicles(); // recharge tous les véhicules, ou remplace si tu veux optimiser
-    })
-    .subscribe();
-</script>
-
-<script>
-  supabase
-    .channel('realtime:patrols')
-    .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'patrols',
-    }, (payload) => {
-      console.log('🚓 Patrouille ajoutée :', payload.new);
-      fetchPatrols(); // recharge la liste
-    })
-    .on('postgres_changes', {
-      event: 'DELETE',
-      schema: 'public',
-      table: 'patrols',
-    }, (payload) => {
-      console.log('🗑 Patrouille supprimée :', payload.old);
-      fetchPatrols(); // recharge la liste
-    })
-    .on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'patrols',
-    }, (payload) => {
-      console.log('🛠 Patrouille modifiée :', payload.new);
-      fetchPatrols();
-    })
-    .subscribe();
-</script>
-
-<script>
-  supabase
-    .channel('realtime:patrols')
-    .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'patrols',
-    }, (payload) => {
-      console.log('🚓 Patrouille ajoutée :', payload.new);
-      fetchPatrols(); // recharge la liste
-    })
-    .on('postgres_changes', {
-      event: 'DELETE',
-      schema: 'public',
-      table: 'patrols',
-    }, (payload) => {
-      console.log('🗑 Patrouille supprimée :', payload.old);
-      fetchPatrols(); // recharge la liste
-    })
-    .on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'patrols',
-    }, (payload) => {
-      console.log('🛠 Patrouille modifiée :', payload.new);
-      fetchPatrols();
-    })
-    .subscribe();
-</script>
-
-<script>
-  supabase
-    .channel('realtime:patrol_agents')
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'patrol_agents',
-    }, (payload) => {
-      console.log('👥 Affectation modifiée :', payload);
-      fetchPatrols();
-    })
-    .subscribe();
 </script>
 
 </body>
