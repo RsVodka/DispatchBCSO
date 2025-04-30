@@ -56,17 +56,18 @@
     }
 
     .agent-item {
-	display: flex;
-	justify-content: space-between; /* aligner les éléments de part et d'autre */
-	align-items: center;
-	width: 100%; /* prend toute la largeur */
-	background-color: transparent;
-	padding: 3px 10px;
-	border-radius: 8px;
-	font-size: 1.0rem;
-	color: white;
-	height: 30px;
+	  display: flex;
+	  justify-content: space-between;
+	  align-items: center;
+	  width: 100%;             /* prends toute la largeur */
+	  background-color: transparent;
+	  padding: 0 10px;
+	  border-radius: 8px;
+	  font-size: 1rem;
+	  color: white;
+	  height: 30px;
 	}
+
 
     .agent-item button {
 	background-color: transparent;
@@ -157,11 +158,11 @@
   <!-- Unité SIB -->
   <div class="unit-card" id="SIB-card">
     <h3 class="font-bold">SIB</h3>
-    <select id="SIB-select">
+    <select id="SIB-select" class="text-black">
       <option value="">Sélectionner un agent</option>
       <!-- Les options seront insérées ici -->
     </select>
-	<select id="SIB-rank" class="mt-2">
+	<select id="SIB-rank" class="mt-2 text-black">
 	  <option value="">Choisir un grade</option>
 	  <option>Recrue</option>
 	  <option>Détective I</option>
@@ -178,11 +179,11 @@
   <!-- Unité SRT -->
   <div class="unit-card" id="SRT-card">
     <h3 class="font-bold">SRT</h3>
-    <select id="SRT-select">
+    <select id="SRT-select" class="text-black">
       <option value="">Sélectionner un agent</option>
       <!-- Les options seront insérées ici -->
     </select>
-	<select id="SRT-rank" class="mt-2">
+	<select id="SRT-rank" class="mt-2 text-black">
 	  <option value="">Choisir un rôle</option>
 	  <option>Recrue</option>
 	  <option>Opérateur secondaire</option>
@@ -300,6 +301,14 @@
 	const select = document.getElementById(`${unit}-select`);
 	const agentId = select.value;
 	const agent = allAgents.find(a => a.id == agentId);
+	
+	let grade = "";
+	if (unit === "SIB") {
+	  grade = document.getElementById("SIB-rank").value;
+	}
+	if (unit === "SRT") {
+	  grade = document.getElementById("SRT-rank").value;
+	}
 
 	if (!agent) {
     alert("Veuillez sélectionner un agent.");
@@ -320,9 +329,10 @@
   const agentItem = document.createElement('div');
   agentItem.className = "agent-item";
   agentItem.innerHTML = `
-    <span>[${agent.badge}] ${agent.name}</span>
+    <span>[${agent.badge}] ${agent.name}${grade ? ` - ${grade}` : ""}</span>
     <button onclick="removeAgent('${unit}', this)">❌</button>
   `;
+
   agentList.appendChild(agentItem);
 
   // Sauvegarder l'agent dans le localStorage
