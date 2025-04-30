@@ -103,6 +103,13 @@ select option:disabled {
   padding: 20px;
 }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.3/dist/umd/supabase.min.js"></script>
+<script>
+  const supabase = window.supabase.createClient(
+    'https://bxmchfiugxxgcejxmohr.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4bWNoZml1Z3h4Z2Nlanhtb2hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NDczMzgsImV4cCI6MjA2MTUyMzMzOH0.J90kmL65e-gJIyOTtd3tIB9q_vxqoFLR80lDqY-l3Mw'
+);
+</script>
 </head>
 <body class="p-8">
 
@@ -210,22 +217,25 @@ let allVehicles = [];
 let allPatrols = [];
 
 async function fetchAgents() {
-  const res = await fetch('/api/agents');
-  allAgents = await res.json();
+  const { data, error } = await supabase.from('agents').select('*');
+  if (error) console.error(error);
+  allAgents = data || [];
   renderAgentsDropdown();
   updateAgentSelects();
 }
 
 async function fetchVehicles() {
-  const res = await fetch('/api/vehicles');
-  allVehicles = await res.json();
+  const { data, error } = await supabase.from('vehicles').select('*');
+  if (error) console.error(error);
+  allVehicles = data || [];
   renderVehiclesDropdown();
   updateVehicleSelect();
 }
 
 async function fetchPatrols() {
-  const res = await fetch('/api/patrols');
-  allPatrols = await res.json();
+  const { data, error } = await supabase.from('patrols').select('*');
+  if (error) console.error(error);
+  allPatrols = data || [];
   renderPatrols();
 }
 
@@ -347,13 +357,8 @@ document.getElementById('agentForm').addEventListener('submit', async (e) => {
     alert("Ce matricule existe déjà !");
     return;
   }
-  await fetch('/api/agents', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, badge })
-  });
-  await fetchAgents();
-  e.target.reset();
+  const { error } = await supabase.from('agents').insert([{ name, badge }]);
+  if (error) return alert("Erreur ajout agent");
 });
 
 document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
@@ -364,13 +369,8 @@ document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
     alert("Cette plaque existe déjà !");
     return;
   }
-  await fetch('/api/vehicles', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, plate })
-  });
-  await fetchVehicles();
-  e.target.reset();
+  const { error } = await supabase.from('vehicles').insert([{ model, plate }]);
+  if (error) return alert("Erreur ajout véhicules");
 });
 
 document.getElementById('agentSelect1').addEventListener('change', () => {
@@ -385,13 +385,25 @@ document.getElementById('agentSelect2').addEventListener('change', () => {
 
 async function deleteAgent(id) {
   if (confirm("Supprimer cet agent ?")) {
-    await fetch(`/api/agents?id=${id}`, { method: 'DELETE' });
+    const { error } = await supabase.from('agents').delete().eq('id', id);
+    if (error) {
+      alert("Erreur lors de la suppression de l’agent");
+      console.error(error);
+    } else {
+      await fetchAgents();
+    }
   }
 }
 
 async function deleteVehicle(id) {
   if (confirm("Supprimer ce véhicule ?")) {
-    await fetch(`/api/vehicles?id=${id}`, { method: 'DELETE' });
+    const { error } = await supabase.from('vehicles').delete().eq('id', id);
+    if (error) {
+      alert("Erreur lors de la suppression du véhicule");
+      console.error(error);
+    } else {
+      await fetchVehicles();
+    }
   }
 }
 
@@ -409,12 +421,25 @@ document.getElementById('patrolForm').addEventListener('submit', async (e) => {
     else if (agents.length === 2) unit_type = 'Adam';
     else if (agents.length === 3) unit_type = 'Tango';
   }
-  const res = await fetch('/api/patrols', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ unit_type, agentIds: agents, vehicleId })
-  });
-const newPatrol = await res.json(); // l'API doit retourner la patrouille
+const { data, error: patrolErr } = await supabase
+  .from('patrols')
+  .insert([{ unit_type, status: 'Disponible', vehicle_id: vehicleId }])
+  .select();
+
+if (patrolErr) {
+  alert("Erreur création patrouille");
+  console.error(patrolErr);
+  return;
+}
+
+const patrolId = data[0].id;
+const inserts = agents.map(agentId => ({ patrol_id: patrolId, agent_id: agentId }));
+const { error: linkErr } = await supabase.from('patrol_agents').insert(inserts);
+if (linkErr) {
+  alert("Erreur assignation des agents");
+  console.error(linkErr);
+  return;
+}
 
 await fetchPatrols();
   fetchAgents();
@@ -449,64 +474,71 @@ function retirerVehiculeDuDOM(vehicleId) {
 function renderPatrols() {
   const patrolsDiv = document.getElementById('patrols');
   patrolsDiv.innerHTML = '';
-Object.keys(allPatrols).forEach(id => {
-  const patrol = allPatrols[id];
-  const div = document.createElement('div');
-  div.className = "patrol-card";
 
-  const adjustedName = adjustPatrolName(patrol.unit_type, patrol.agents);
+  allPatrols.forEach(patrol => {
+    const id = patrol.id;
+    const div = document.createElement('div');
+    div.className = "patrol-card";
 
-  const savedSector = localStorage.getItem(`secteur_${id}`) || "";
-  const savedStatus = localStorage.getItem(`statut_${id}`) || "disponible";
+    const adjustedName = adjustPatrolName(patrol.unit_type, patrol.agents);
+    const savedSector = localStorage.getItem(`secteur_${id}`) || "";
+    const savedStatus = localStorage.getItem(`statut_${id}`) || "disponible";
 
-  const agentsHTML = patrol.agents.map(agent => `
-    <div class="flex justify-between items-center">
-      <span>[${agent.badge}] ${agent.name}</span>
-      <button onclick="removeAgentFromPatrol(${id}, ${agent.id})" class="ml-2 text-red-500">❌</button>
-    </div>
-  `).join('');
+    const agentsHTML = patrol.agents.map(agent => `
+      <div class="flex justify-between items-center">
+        <span>[${agent.badge}] ${agent.name}</span>
+        <button onclick="removeAgentFromPatrol(${id}, ${agent.id})" class="ml-2 text-red-500">❌</button>
+      </div>
+    `).join('');
 
-  div.innerHTML = `
-    <div class="patrol-agents">
-      <h3 class="font-bold">${adjustedName} ${patrol.agents[0]?.badge || ''}</h3>
-      ${agentsHTML}
-    </div>
-    <div class="flex flex-row gap-2 items-center justify-center flex-wrap">
-      <select onchange="updateSector(${id}, this.value)" class="text-black bg-white p-1 rounded my-2">
-        <option value="Secteur 1" ${savedSector === "Secteur 1" ? "selected" : ""}>Secteur 1</option>
-        <option value="Secteur 2" ${savedSector === "Secteur 2" ? "selected" : ""}>Secteur 2</option>
-        <option value="Secteur 3" ${savedSector === "Secteur 3" ? "selected" : ""}>Secteur 3</option>
-        <option value="Secteur 4" ${savedSector === "Secteur 4" ? "selected" : ""}>Secteur 4</option>
-        <option value="Secteur 5" ${savedSector === "Secteur 5" ? "selected" : ""}>Secteur 5</option>
-        <option value="Secteur 6" ${savedSector === "Secteur 6" ? "selected" : ""}>Secteur 6</option>
-        <option value="Hors Juridiction" ${savedSector === "Hors Juridiction" ? "selected" : ""}>Hors Juridiction</option>
-      </select>
+    div.innerHTML = `
+      <div class="patrol-agents">
+        <h3 class="font-bold">${adjustedName} ${patrol.agents[0]?.badge || ''}</h3>
+        ${agentsHTML}
+      </div>
+      <div class="flex flex-row gap-2 items-center justify-center flex-wrap">
+        <select onchange="updateSector(${id}, this.value)" class="text-black bg-white p-1 rounded my-2">
+          <option value="Secteur 1" ${savedSector === "Secteur 1" ? "selected" : ""}>Secteur 1</option>
+          <option value="Secteur 2" ${savedSector === "Secteur 2" ? "selected" : ""}>Secteur 2</option>
+          <option value="Secteur 3" ${savedSector === "Secteur 3" ? "selected" : ""}>Secteur 3</option>
+          <option value="Secteur 4" ${savedSector === "Secteur 4" ? "selected" : ""}>Secteur 4</option>
+          <option value="Secteur 5" ${savedSector === "Secteur 5" ? "selected" : ""}>Secteur 5</option>
+          <option value="Secteur 6" ${savedSector === "Secteur 6" ? "selected" : ""}>Secteur 6</option>
+          <option value="Hors Juridiction" ${savedSector === "Hors Juridiction" ? "selected" : ""}>Hors Juridiction</option>
+        </select>
 
-      <select onchange="updateStatus(${id}, this.value)" class="text-black bg-white p-1 rounded my-2">
-        <option value="disponible" ${savedStatus === "disponible" ? "selected" : ""}>Disponible</option>
-        <option value="occupé" ${savedStatus === "occupé" ? "selected" : ""}>Occupé</option>
-      </select>
-    </div>
+        <select onchange="updateStatus(${id}, this.value)" class="text-black bg-white p-1 rounded my-2">
+          <option value="disponible" ${savedStatus === "disponible" ? "selected" : ""}>Disponible</option>
+          <option value="occupé" ${savedStatus === "occupé" ? "selected" : ""}>Occupé</option>
+        </select>
+      </div>
 
-    <div class="patrol-vehicle">
-      <span class="font-bold">${patrol.vehicle_model || 'Modèle inconnu'} [${patrol.vehicle_plate?.replace(/[\[\]]/g, '') || 'Plaque inconnue'}]</span>
-      <button onclick="deletePatrol(${id})" class="text-red-500 mt-2">Supprimer Patrouille ❌</button>
-    </div>
-  `;
+      <div class="patrol-vehicle">
+        <span class="font-bold">${patrol.vehicle_model || 'Modèle inconnu'} [${patrol.vehicle_plate?.replace(/[\[\]]/g, '') || 'Plaque inconnue'}]</span>
+        <button onclick="deletePatrol(${id})" class="text-red-500 mt-2">Supprimer Patrouille ❌</button>
+      </div>
+    `;
 
-  patrolsDiv.appendChild(div);
+    patrolsDiv.appendChild(div);
   });
 }
 
 async function removeAgentFromPatrol(patrolId, agentId) {
   if (!confirm("Retirer cet agent de la patrouille ?")) return;
 
-  await fetch(`/api/patrols/remove-agent?patrolId=${patrolId}&agentId=${agentId}`, { method: 'DELETE' });
-  
-  // Recharge les patrouilles après suppression
+  const { error } = await supabase.from('patrol_agents').delete().match({
+    patrol_id: patrolId,
+    agent_id: agentId
+  });
+
+  if (error) {
+    alert("Erreur retrait agent");
+    console.error(error);
+    return;
+  }
+
   await fetchPatrols();
 
-  // Vérifie si la patrouille n’a plus d’agents
   const patrol = allPatrols[patrolId];
   if (patrol && patrol.agents.length === 0) {
     await deletePatrol(patrolId);
@@ -522,31 +554,37 @@ async function updateStatus(patrolId, statut) {
 
 async function deletePatrol(id) {
   if (!confirm("Supprimer cette patrouille complètement ?")) return;
-  await fetch(`/api/patrols?id=${id}`, { method: 'DELETE' });
-  fetchPatrols();
-  fetchAgents();
+
+  const { error: agentsError } = await supabase.from('patrol_agents').delete().eq('patrol_id', id);
+  const { error: patrolError } = await supabase.from('patrols').delete().eq('id', id);
+
+  if (agentsError || patrolError) {
+    alert("Erreur suppression patrouille");
+    console.error(agentsError || patrolError);
+  } else {
+    await fetchPatrols();
+    await fetchAgents();
+  }
 }
 
 async function updatePatrolField(patrolId, updates) {
-  await fetch('/api/patrols', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: patrolId, updates })
-  });
+  const { error } = await supabase.from('patrols').update(updates).eq('id', patrolId);
+  if (error) {
+    console.error("Erreur mise à jour patrouille :", error.message);
+  }
 }
 
 async function updateSector(patrolId, secteur) {
-  // ✅ 1. Met à jour Supabase
-  await fetch('/api/patrols', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: patrolId, updates: { sector: secteur } })
-  });
-
-fetchAgents();
-fetchVehicles();
-fetchPatrols();
+  const { error } = await supabase.from('patrols').update({ sector: secteur }).eq('id', patrolId);
+  if (error) {
+    console.error("Erreur mise à jour secteur :", error.message);
+  } else {
+    fetchAgents();
+    fetchVehicles();
+    fetchPatrols();
+  }
 }
+
 </script>
 
 </body>
