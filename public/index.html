@@ -378,12 +378,9 @@ document.getElementById('patrolForm').addEventListener('submit', async (e) => {
 
 function adjustPatrolName(originalName, agents) {
   const count = agents.length;
-  if (count === 1) {
-    if (originalName.startsWith("Adam")) return originalName.replace("Adam", "Lincoln");
-    if (originalName.startsWith("Tango")) return originalName.replace("Tango", "Lincoln");
-  } else {
-    if (originalName.startsWith("Tango")) return originalName.replace("Tango", "Adam");
-  }
+  if (count === 3) return originalName.replace(/^(Adam|Lincoln)/, 'Tango');
+  if (count === 2) return originalName.replace(/^(Tango|Lincoln)/, 'Adam');
+  if (count === 1) return originalName.replace(/^(Tango|Adam)/, 'Lincoln');
   return originalName;
 }
 
