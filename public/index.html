@@ -203,6 +203,17 @@ let allAgents = [];
 let allVehicles = [];
 let allPatrols = [];
 
+// Appliquer le thème général dès maintenant
+const root = document.documentElement;
+root.style.setProperty('--bg-color', '#1e1e1e');
+root.style.setProperty('--card-color', 'rgba(30,30,30,0.9)');
+root.style.setProperty('--text-color', '#f5f5f5');
+root.style.setProperty('--accent-color', '#d4af37'); // Doré sheriff
+root.style.setProperty('--button-color', '#2e7d32');
+
+// Effet dark mode natif (si souhaité toggle, créer un bouton plus tard)
+document.body.classList.add('dark');
+
 async function fetchAgents() {
   const res = await fetch('/api/agents');
   allAgents = await res.json();
@@ -269,6 +280,8 @@ function updateAgentSelects() {
       option.textContent = `[${agent.badge}] ${agent.name}`;
       if (usedBadges.includes(agent.badge) && prev !== agent.id.toString()) {
         option.disabled = true;
+        option.style.textDecoration = 'line-through';
+        option.style.color = '#888';
       }
       select.appendChild(option);
     });
@@ -286,95 +299,6 @@ function updateVehicleSelect() {
     vehicleSelect.appendChild(option);
   });
 }
-
-document.getElementById('agentForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const name = document.getElementById('name').value;
-  const badge = document.getElementById('badge').value;
-  if (allAgents.find(a => a.badge === badge)) {
-    alert("Ce matricule existe déjà !");
-    return;
-  }
-  await fetch('/api/agents', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, badge })
-  });
-  await fetchAgents();
-  e.target.reset();
-});
-
-document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const model = document.getElementById('model').value;
-  const plate = document.getElementById('plate').value;
-  if (allVehicles.find(v => v.plate === plate)) {
-    alert("Cette plaque existe déjà !");
-    return;
-  }
-  await fetch('/api/vehicles', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, plate })
-  });
-  await fetchVehicles();
-  e.target.reset();
-});
-
-document.getElementById('agentSelect1').addEventListener('change', () => {
-  document.getElementById('agentSelect2').classList.toggle('hidden', !document.getElementById('agentSelect1').value);
-  updateAgentSelects();
-});
-
-document.getElementById('agentSelect2').addEventListener('change', () => {
-  document.getElementById('agentSelect3').classList.toggle('hidden', !document.getElementById('agentSelect2').value);
-  updateAgentSelects();
-});
-
-async function deleteAgent(id) {
-  if (confirm("Supprimer cet agent ?")) {
-    await fetch(`/api/agents?id=${id}`, { method: 'DELETE' });
-    fetchAgents();
-  }
-}
-
-async function deleteVehicle(id) {
-  if (confirm("Supprimer ce véhicule ?")) {
-    await fetch(`/api/vehicles?id=${id}`, { method: 'DELETE' });
-    fetchVehicles();
-  }
-}
-
-document.getElementById('patrolForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  let unit_type = document.getElementById('unit_type').value;
-  const agents = [
-    document.getElementById('agentSelect1').value,
-    document.getElementById('agentSelect2').value,
-    document.getElementById('agentSelect3').value
-  ].filter(Boolean);
-  const vehicleId = document.getElementById('vehicleSelect').value;
-  if (!unit_type) {
-    if (agents.length === 1) unit_type = 'Lincoln';
-    else if (agents.length === 2) unit_type = 'Adam';
-    else if (agents.length === 3) unit_type = 'Tango';
-  }
-  await fetch('/api/patrols', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ unit_type, agentIds: agents, vehicleId })
-  });
-  fetchPatrols();
-  fetchAgents();
-  fetchVehicles();
-  document.getElementById('unit_type').value = "";
-  document.getElementById('agentSelect1').value = "";
-  document.getElementById('agentSelect2').value = "";
-  document.getElementById('agentSelect2').classList.add('hidden');
-  document.getElementById('agentSelect3').value = "";
-  document.getElementById('agentSelect3').classList.add('hidden');
-  document.getElementById('vehicleSelect').value = "";
-});
 
 function adjustPatrolName(originalName, agents) {
   const count = agents.length;
@@ -398,10 +322,12 @@ function renderPatrols() {
         <button onclick="removeAgentFromPatrol(${id}, ${agent.id})" class="ml-2 text-red-500">❌</button>
       </div>
     `).join('');
+    const heure = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     div.innerHTML = `
       <div class="patrol-agents">
         <h3 class="font-bold">${adjustedName} ${patrol.agents[0]?.badge || ''}</h3>
         ${agentsHTML}
+        <p class="text-xs text-gray-400 italic">créée à ${heure}</p>
       </div>
       <div class="flex flex-col items-center justify-center">
         <select onchange="updateSector(${id}, this.value)" class="text-black bg-white p-1 rounded my-2">
@@ -429,6 +355,7 @@ async function removeAgentFromPatrol(patrolId, agentId) {
   await fetch(`/api/patrols/remove-agent?patrolId=${patrolId}&agentId=${agentId}`, { method: 'DELETE' });
   fetchPatrols();
   fetchAgents();
+  new Audio('/radio_click.mp3').play();
 }
 
 async function deletePatrol(id) {
@@ -436,10 +363,12 @@ async function deletePatrol(id) {
   await fetch(`/api/patrols?id=${id}`, { method: 'DELETE' });
   fetchPatrols();
   fetchAgents();
+  new Audio('/radio_click.mp3').play();
 }
 
 function updateSector(patrolId, secteur) {
   alert(`📍 Patrouille ${patrolId} assignée à ${secteur}`);
+  new Audio('/radio_click.mp3').play();
 }
 
 fetchAgents();
