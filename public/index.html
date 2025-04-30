@@ -585,6 +585,13 @@ async function updateSector(patrolId, secteur) {
   }
 }
 
+// Appels initiaux pour charger les données dès l'ouverture de la page
+window.onload = async () => {
+  await fetchAgents();
+  await fetchVehicles();
+  await fetchPatrols();
+};
+
 </script>
 
 </body>
