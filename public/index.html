@@ -387,48 +387,75 @@ function adjustPatrolName(originalName, agents) {
 function renderPatrols() {
   const patrolsDiv = document.getElementById('patrols');
   patrolsDiv.innerHTML = '';
-  Object.keys(allPatrols).forEach(id => {
-    const patrol = allPatrols[id];
-    const div = document.createElement('div');
-    div.className = "patrol-card";
-    const adjustedName = adjustPatrolName(patrol.unit_type, patrol.agents);
-    const agentsHTML = patrol.agents.map(agent => `
-      <div class="flex justify-between items-center">
-        <span>[${agent.badge}] ${agent.name}</span>
-        <button onclick="removeAgentFromPatrol(${id}, ${agent.id})" class="ml-2 text-red-500">❌</button>
-      </div>
-    `).join('');
-    div.innerHTML = `
-      <div class="patrol-agents">
-        <h3 class="font-bold">${adjustedName} ${patrol.agents[0]?.badge || ''}</h3>
-        ${agentsHTML}
-      </div>
-      <div class="flex flex-col items-center justify-center">
-        <select onchange="updateSector(${id}, this.value)" class="text-black bg-white p-1 rounded my-2">
-          <option value="">Définir un secteur</option>
-          <option value="Secteur 1">Secteur 1</option>
-          <option value="Secteur 2">Secteur 2</option>
-          <option value="Secteur 3">Secteur 3</option>
-          <option value="Secteur 4">Secteur 4</option>
-          <option value="Secteur 5">Secteur 5</option>
-          <option value="Secteur 6">Secteur 6</option>
-          <option value="Hors juridiction">Hors juridiction</option>
-        </select>
-      </div>
-      <div class="patrol-vehicle">
-        <span class="font-bold">${patrol.vehicle_model || 'Modèle inconnu'} [${patrol.vehicle_plate?.replace(/[\[\]]/g, '') || 'Plaque inconnue'}]</span>
-        <button onclick="deletePatrol(${id})" class="text-red-500 mt-2">Supprimer Patrouille ❌</button>
-      </div>
-    `;
-    patrolsDiv.appendChild(div);
+Object.keys(allPatrols).forEach(id => {
+  const patrol = allPatrols[id];
+  const div = document.createElement('div');
+  div.className = "patrol-card";
+
+  const adjustedName = adjustPatrolName(patrol.unit_type, patrol.agents);
+
+  const savedSector = localStorage.getItem(`secteur_${id}`) || "";
+  const savedStatus = localStorage.getItem(`statut_${id}`) || "disponible";
+
+  const agentsHTML = patrol.agents.map(agent => `
+    <div class="flex justify-between items-center">
+      <span>[${agent.badge}] ${agent.name}</span>
+      <button onclick="removeAgentFromPatrol(${id}, ${agent.id})" class="ml-2 text-red-500">❌</button>
+    </div>
+  `).join('');
+
+  div.innerHTML = `
+    <div class="patrol-agents">
+      <h3 class="font-bold">${adjustedName} ${patrol.agents[0]?.badge || ''}</h3>
+      ${agentsHTML}
+    </div>
+    <div class="flex flex-row gap-2 items-center justify-center flex-wrap">
+      <select onchange="updateSector(${id}, this.value)" class="text-black bg-white p-1 rounded my-2">
+        <option value="Secteur 1" ${savedSector === "Secteur 1" ? "selected" : ""}>Secteur 1</option>
+        <option value="Secteur 2" ${savedSector === "Secteur 2" ? "selected" : ""}>Secteur 2</option>
+        <option value="Secteur 3" ${savedSector === "Secteur 3" ? "selected" : ""}>Secteur 3</option>
+        <option value="Secteur 4" ${savedSector === "Secteur 4" ? "selected" : ""}>Secteur 4</option>
+        <option value="Secteur 5" ${savedSector === "Secteur 5" ? "selected" : ""}>Secteur 5</option>
+        <option value="Secteur 6" ${savedSector === "Secteur 6" ? "selected" : ""}>Secteur 6</option>
+        <option value="Hors Juridiction" ${savedSector === "Hors Juridiction" ? "selected" : ""}>Hors Juridiction</option>
+      </select>
+
+      <select onchange="updateStatus(${id}, this.value)" class="text-black bg-white p-1 rounded my-2">
+        <option value="disponible" ${savedStatus === "disponible" ? "selected" : ""}>Disponible</option>
+        <option value="occupé" ${savedStatus === "occupé" ? "selected" : ""}>Occupé</option>
+      </select>
+    </div>
+
+    <div class="patrol-vehicle">
+      <span class="font-bold">${patrol.vehicle_model || 'Modèle inconnu'} [${patrol.vehicle_plate?.replace(/[\[\]]/g, '') || 'Plaque inconnue'}]</span>
+      <button onclick="deletePatrol(${id})" class="text-red-500 mt-2">Supprimer Patrouille ❌</button>
+    </div>
+  `;
+
+  patrolsDiv.appendChild(div);
   });
 }
 
 async function removeAgentFromPatrol(patrolId, agentId) {
   if (!confirm("Retirer cet agent de la patrouille ?")) return;
+
   await fetch(`/api/patrols/remove-agent?patrolId=${patrolId}&agentId=${agentId}`, { method: 'DELETE' });
-  fetchPatrols();
+
+  // Recharge les patrouilles après suppression
+  await fetchPatrols();
+
+  // Vérifie si la patrouille n’a plus d’agents
+  const patrol = allPatrols[patrolId];
+  if (patrol && patrol.agents.length === 0) {
+    await deletePatrol(patrolId);
+  }
+
   fetchAgents();
+}
+
+function updateStatus(patrolId, statut) {
+  localStorage.setItem(`statut_${patrolId}`, statut);
+  alert(`🚔 Patrouille ${patrolId} est maintenant "${statut}"`);
 }
 
 async function deletePatrol(id) {
@@ -439,6 +466,7 @@ async function deletePatrol(id) {
 }
 
 function updateSector(patrolId, secteur) {
+  localStorage.setItem(`secteur_${patrolId}`, secteur);
   alert(`📍 Patrouille ${patrolId} assignée à ${secteur}`);
 }
 
