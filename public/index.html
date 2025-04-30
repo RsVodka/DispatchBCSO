@@ -398,16 +398,6 @@ document.getElementById('agentSelect2').addEventListener('change', () => {
   updateAgentSelects();
 });
 
-    } else {
-      await fetchAgents(); // 🔄 recharge la liste
-      updateAgentSelects(); // 🔁 met à jour les <select>
-    }
-
-    } else {
-      await fetchVehicles(); // 🔄 recharge liste véhicules
-      updateVehicleSelect(); // 🔁 met à jour le <select>
-    }
-
 document.getElementById('patrolForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   let unit_type = document.getElementById('unit_type').value;
