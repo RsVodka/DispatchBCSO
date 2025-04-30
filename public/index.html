@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Dispatch BCSO</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.3/dist/umd/supabase.min.js"></script>
   <style>
     body {
 	  background-color: #4E3B31;
@@ -209,7 +210,7 @@ select option:disabled {
 
 <!-- 2. Ensuite, ton code Socket.IO -->
 <script>
-  const socket = io("http://localhost:3000");
+  const socket = io();
 
   socket.on("agent_ajoute", (agent) => {
     ajouterAgentDansLeDOM(agent);
@@ -569,9 +570,11 @@ async function removeAgentFromPatrol(patrolId, agentId) {
   fetchAgents();
 }
 
-function updateStatus(patrolId, statut) {
+async function updateStatus(patrolId, statut) {
   localStorage.setItem(`statut_${patrolId}`, statut);
   socket.emit("statut_mis_a_jour", { patrolId, statut });
+
+  await updatePatrolField(patrolId, { status: statut });
 }
 
 async function deletePatrol(id) {
@@ -582,7 +585,23 @@ async function deletePatrol(id) {
   fetchAgents();
 }
 
-function updateSector(patrolId, secteur) {
+async function updatePatrolField(patrolId, updates) {
+  await fetch('/api/patrols', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: patrolId, updates })
+  });
+}
+
+async function updateSector(patrolId, secteur) {
+  // ✅ 1. Met à jour Supabase
+  await fetch('/api/patrols', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: patrolId, updates: { sector: secteur } })
+  });
+
+  // ✅ 2. Mise à jour locale + diffusion
   localStorage.setItem(`secteur_${patrolId}`, secteur);
   socket.emit("secteur_mis_a_jour", { patrolId, secteur });
 }
@@ -592,7 +611,145 @@ fetchVehicles();
 fetchPatrols();
 </script>
 
+<script>
+  const supabase = window.supabase.createClient(
+    'https://bxmchfiugxxgcejxmohr.supabase.co', // ton URL
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4bWNoZml1Z3h4Z2Nlanhtb2hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NDczMzgsImV4cCI6MjA2MTUyMzMzOH0.J90kmL65e-gJIyOTtd3tIB9q_vxqoFLR80lDqY-l3Mw'
+  );
 
+  // Realtime: écouter les nouveaux agents ajoutés
+  supabase
+  .channel('realtime:agents')
+  .on('postgres_changes', {
+    event: 'INSERT',
+    schema: 'public',
+    table: 'agents',
+  }, (payload) => {
+    console.log('📡 Agent ajouté :', payload.new);
+    ajouterAgentDansLeDOM(payload.new);
+  })
+  .on('postgres_changes', {
+    event: 'DELETE',
+    schema: 'public',
+    table: 'agents',
+  }, (payload) => {
+    console.log('❌ Agent supprimé :', payload.old);
+    retirerAgentDuDOM(payload.old.id);
+  })
+  .on('postgres_changes', {
+    event: 'UPDATE',
+    schema: 'public',
+    table: 'agents',
+  }, (payload) => {
+    console.log('✏️ Agent mis à jour :', payload.new);
+    fetchAgents(); // ou une fonction plus précise si tu veux juste mettre à jour l'élément modifié
+  })
+  .subscribe();
+</script>
+
+<script>
+  supabase
+    .channel('realtime:vehicles')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'vehicles',
+    }, (payload) => {
+      console.log('📡 Véhicule ajouté :', payload.new);
+      ajouterVehiculeDansLeDOM(payload.new);
+    })
+    .on('postgres_changes', {
+      event: 'DELETE',
+      schema: 'public',
+      table: 'vehicles',
+    }, (payload) => {
+      console.log('❌ Véhicule supprimé :', payload.old);
+      retirerVehiculeDuDOM(payload.old.id);
+    })
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'vehicles',
+    }, (payload) => {
+      console.log('✏️ Véhicule mis à jour :', payload.new);
+      fetchVehicles(); // recharge tous les véhicules, ou remplace si tu veux optimiser
+    })
+    .subscribe();
+</script>
+
+<script>
+  supabase
+    .channel('realtime:patrols')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'patrols',
+    }, (payload) => {
+      console.log('🚓 Patrouille ajoutée :', payload.new);
+      fetchPatrols(); // recharge la liste
+    })
+    .on('postgres_changes', {
+      event: 'DELETE',
+      schema: 'public',
+      table: 'patrols',
+    }, (payload) => {
+      console.log('🗑 Patrouille supprimée :', payload.old);
+      fetchPatrols(); // recharge la liste
+    })
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'patrols',
+    }, (payload) => {
+      console.log('🛠 Patrouille modifiée :', payload.new);
+      fetchPatrols();
+    })
+    .subscribe();
+</script>
+
+<script>
+  supabase
+    .channel('realtime:patrols')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'patrols',
+    }, (payload) => {
+      console.log('🚓 Patrouille ajoutée :', payload.new);
+      fetchPatrols(); // recharge la liste
+    })
+    .on('postgres_changes', {
+      event: 'DELETE',
+      schema: 'public',
+      table: 'patrols',
+    }, (payload) => {
+      console.log('🗑 Patrouille supprimée :', payload.old);
+      fetchPatrols(); // recharge la liste
+    })
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'patrols',
+    }, (payload) => {
+      console.log('🛠 Patrouille modifiée :', payload.new);
+      fetchPatrols();
+    })
+    .subscribe();
+</script>
+
+<script>
+  supabase
+    .channel('realtime:patrol_agents')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'patrol_agents',
+    }, (payload) => {
+      console.log('👥 Affectation modifiée :', payload);
+      fetchPatrols();
+    })
+    .subscribe();
+</script>
 
 </body>
 </html>

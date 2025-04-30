@@ -1,9 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
-const supabaseUrl = 'https://bxmchfiugxxgcejxmohr.supabase.co';
-const supabaseKey = 'eyJhbGciOi...'; // raccourci ici pour sécurité
-export const supabase = createClient(supabaseUrl, supabaseKey);
-
-// --- Serveur Socket.IO ---
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -26,18 +20,14 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("agent_supprime", agentId);
   });
 
-  socket.on("disconnect", () => {
-    console.log("🔴 Un utilisateur s'est déconnecté");
-  });
-  
   socket.on("vehicule_ajoute", (vehicle) => {
     socket.broadcast.emit("vehicule_ajoute", vehicle);
   });
-  
+
   socket.on("vehicule_supprime", (vehicleId) => {
     socket.broadcast.emit("vehicule_supprime", vehicleId);
   });
-  
+
   socket.on("patrouille_creee", (patrol) => {
     socket.broadcast.emit("patrouille_creee", patrol);
   });
@@ -45,17 +35,21 @@ io.on("connection", (socket) => {
   socket.on("patrouille_supprimee", (patrolId) => {
     socket.broadcast.emit("patrouille_supprimee", patrolId);
   });
-  
+
   socket.on("agent_retire_patrouille", ({ patrolId, agentId }) => {
     socket.broadcast.emit("agent_retire_patrouille", { patrolId, agentId });
   });
-  
+
   socket.on("secteur_mis_a_jour", ({ patrolId, secteur }) => {
     socket.broadcast.emit("secteur_mis_a_jour", { patrolId, secteur });
   });
 
   socket.on("statut_mis_a_jour", ({ patrolId, statut }) => {
     socket.broadcast.emit("statut_mis_a_jour", { patrolId, statut });
+  });
+
+  socket.on("disconnect", () => {
+    console.log("🔴 Un utilisateur s'est déconnecté");
   });
 });
 
