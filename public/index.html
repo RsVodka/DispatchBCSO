@@ -204,6 +204,46 @@ select option:disabled {
 </div>
 
 <!-- Ton JavaScript complet commence ici -->
+<!-- 1. Charger la bibliothèque Socket.IO -->
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+<!-- 2. Ensuite, ton code Socket.IO -->
+<script>
+  const socket = io("http://localhost:3000");
+
+  socket.on("agent_ajoute", (agent) => {
+    ajouterAgentDansLeDOM(agent);
+  });
+  socket.on("agent_supprime", (agentId) => {
+    retirerAgentDuDOM(agentId);
+  });
+  socket.on("vehicule_ajoute", (vehicle) => {
+    ajouterVehiculeDansLeDOM(vehicle);
+  });
+  socket.on("vehicule_supprime", (vehicleId) => {
+    retirerVehiculeDuDOM(vehicleId);
+  });
+  socket.on("patrouille_creee", (patrol) => {
+    allPatrols[patrol.id] = patrol;
+    renderPatrols();
+  });
+  socket.on("patrouille_supprimee", (patrolId) => {
+    delete allPatrols[patrolId];
+    renderPatrols();
+  });
+  socket.on("agent_retire_patrouille", async ({ patrolId, agentId }) => {
+    await fetchPatrols();
+  });
+  socket.on("secteur_mis_a_jour", ({ patrolId, secteur }) => {
+    localStorage.setItem(`secteur_${patrolId}`, secteur);
+    renderPatrols();
+  });
+  socket.on("statut_mis_a_jour", ({ patrolId, statut }) => {
+    localStorage.setItem(`statut_${patrolId}`, statut);
+    renderPatrols();
+  });
+</script>
+
 <script>
 let allAgents = [];
 let allVehicles = [];
@@ -282,6 +322,16 @@ function updateAgentSelects() {
   });
 }
 
+function retirerAgentDuDOM(agentId) {
+  const agentsList = document.getElementById("agentsList");
+  const agentItem = Array.from(agentsList.children).find(div =>
+    div.querySelector('button')?.getAttribute("onclick")?.includes(agentId)
+  );
+  if (agentItem) {
+    agentsList.removeChild(agentItem);
+  }
+}
+
 function updateVehicleSelect() {
   const vehicleSelect = document.getElementById('vehicleSelect');
   vehicleSelect.innerHTML = '<option value="">Sélectionner Véhicule</option>';
@@ -291,6 +341,42 @@ function updateVehicleSelect() {
     option.textContent = `${vehicle.model} ${vehicle.plate}`;
     vehicleSelect.appendChild(option);
   });
+}
+
+function ajouterAgentDansLeDOM(agent) {
+  const agentList = document.getElementById('agentsList');
+
+  // Vérifier si l'agent existe déjà
+  const exists = Array.from(agentList.children).some(div =>
+    div.textContent.includes(agent.badge)
+  );
+  if (exists) return;
+
+  const div = document.createElement("div");
+  div.className = "dropdown-item";
+  div.innerHTML = `
+    <span>[${agent.badge}] ${agent.name}</span>
+    <button onclick="deleteAgent(${agent.id})" class="text-red-500 ml-2">❌</button>
+  `;
+  agentList.appendChild(div);
+}
+
+function ajouterVehiculeDansLeDOM(vehicle) {
+  const vehiclesList = document.getElementById('vehiclesList');
+
+  // Vérifie s'il est déjà affiché
+  const exists = Array.from(vehiclesList.children).some(div =>
+    div.textContent.includes(vehicle.plate)
+  );
+  if (exists) return;
+
+  const div = document.createElement("div");
+  div.className = "dropdown-item";
+  div.innerHTML = `
+    <span>${vehicle.model} [${vehicle.plate}]</span>
+    <button class="text-red-500 ml-2">❌</button>
+  `;
+  vehiclesList.appendChild(div);
 }
 
 document.getElementById('agentForm').addEventListener('submit', async (e) => {
@@ -307,6 +393,10 @@ document.getElementById('agentForm').addEventListener('submit', async (e) => {
     body: JSON.stringify({ name, badge })
   });
   await fetchAgents();
+  socket.emit("agent_ajoute", {
+  badge,
+  name
+});
   e.target.reset();
 });
 
@@ -324,6 +414,10 @@ document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
     body: JSON.stringify({ model, plate })
   });
   await fetchVehicles();
+  socket.emit("vehicule_ajoute", {
+  model,
+  plate
+});
   e.target.reset();
 });
 
@@ -340,6 +434,7 @@ document.getElementById('agentSelect2').addEventListener('change', () => {
 async function deleteAgent(id) {
   if (confirm("Supprimer cet agent ?")) {
     await fetch(`/api/agents?id=${id}`, { method: 'DELETE' });
+    socket.emit("agent_supprime", id); // cette ligne était mal placée
     fetchAgents();
   }
 }
@@ -347,6 +442,7 @@ async function deleteAgent(id) {
 async function deleteVehicle(id) {
   if (confirm("Supprimer ce véhicule ?")) {
     await fetch(`/api/vehicles?id=${id}`, { method: 'DELETE' });
+    socket.emit("vehicule_supprime", id); // ← ajout
     fetchVehicles();
   }
 }
@@ -365,12 +461,15 @@ document.getElementById('patrolForm').addEventListener('submit', async (e) => {
     else if (agents.length === 2) unit_type = 'Adam';
     else if (agents.length === 3) unit_type = 'Tango';
   }
-  await fetch('/api/patrols', {
+  const res = await fetch('/api/patrols', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ unit_type, agentIds: agents, vehicleId })
   });
-  fetchPatrols();
+const newPatrol = await res.json(); // l'API doit retourner la patrouille
+
+socket.emit("patrouille_creee", newPatrol); // ← on envoie aux autres
+await fetchPatrols();
   fetchAgents();
   fetchVehicles();
   document.getElementById('unit_type').value = "";
@@ -388,6 +487,16 @@ function adjustPatrolName(originalName, agents) {
   if (count === 2) return originalName.replace(/^(Tango|Lincoln)/, 'Adam');
   if (count === 1) return originalName.replace(/^(Tango|Adam)/, 'Lincoln');
   return originalName;
+}
+
+function retirerVehiculeDuDOM(vehicleId) {
+  const vehiclesList = document.getElementById("vehiclesList");
+  const vehicleItem = Array.from(vehiclesList.children).find(div =>
+    div.querySelector('button')?.getAttribute("onclick")?.includes(vehicleId)
+  );
+  if (vehicleItem) {
+    vehiclesList.removeChild(vehicleItem);
+  }
 }
 
 function renderPatrols() {
@@ -446,7 +555,8 @@ async function removeAgentFromPatrol(patrolId, agentId) {
   if (!confirm("Retirer cet agent de la patrouille ?")) return;
 
   await fetch(`/api/patrols/remove-agent?patrolId=${patrolId}&agentId=${agentId}`, { method: 'DELETE' });
-
+  socket.emit("agent_retire_patrouille", { patrolId, agentId });
+  
   // Recharge les patrouilles après suppression
   await fetchPatrols();
 
@@ -461,19 +571,20 @@ async function removeAgentFromPatrol(patrolId, agentId) {
 
 function updateStatus(patrolId, statut) {
   localStorage.setItem(`statut_${patrolId}`, statut);
-  alert(`🚔 Patrouille ${patrolId} est maintenant "${statut}"`);
+  socket.emit("statut_mis_a_jour", { patrolId, statut });
 }
 
 async function deletePatrol(id) {
   if (!confirm("Supprimer cette patrouille complètement ?")) return;
   await fetch(`/api/patrols?id=${id}`, { method: 'DELETE' });
+  socket.emit("patrouille_supprimee", id); // 🔥 on notifie les autres
   fetchPatrols();
   fetchAgents();
 }
 
 function updateSector(patrolId, secteur) {
   localStorage.setItem(`secteur_${patrolId}`, secteur);
-  alert(`📍 Patrouille ${patrolId} assignée à ${secteur}`);
+  socket.emit("secteur_mis_a_jour", { patrolId, secteur });
 }
 
 fetchAgents();
