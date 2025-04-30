@@ -56,15 +56,16 @@
     }
 
     .agent-item {
-	display: flex; /* Aligner les éléments horizontalement */
-	justify-content: center; /* Espacer le texte (nom de l'agent) et la croix */
-	align-items: center; /* Aligner verticalement la croix et le texte */
-	background-color: transparent; /* Retirer le fond gris */
-	padding: 3px 10px; /* Un peu d'espace autour du texte */
-	border-radius: 8px; /* Coins arrondis */
-	font-size: 1.0rem; /* Taille du texte */
-	color: white; /* Texte en blanc */
-	height: 30px; /* Fixer la hauteur des éléments pour rapprocher les noms */
+	display: flex;
+	justify-content: space-between; /* aligner les éléments de part et d'autre */
+	align-items: center;
+	width: 100%; /* prend toute la largeur */
+	background-color: transparent;
+	padding: 3px 10px;
+	border-radius: 8px;
+	font-size: 1.0rem;
+	color: white;
+	height: 30px;
 	}
 
     .agent-item button {
@@ -160,6 +161,14 @@
       <option value="">Sélectionner un agent</option>
       <!-- Les options seront insérées ici -->
     </select>
+	<select id="SIB-rank" class="mt-2">
+	  <option value="">Choisir un grade</option>
+	  <option>Recrue</option>
+	  <option>Détective I</option>
+	  <option>Détective II</option>
+	  <option>Détective III</option>
+	  <option>Inspecteur</option>
+	</select>
     <button class="bg-green-500 text-white p-2 rounded mt-2 w-full" onclick="addAgentToUnit('SIB')">Ajouter Agent</button>
     <div class="agent-list" id="SIB-list">
       <!-- Les agents de SIB seront listés ici -->
@@ -173,6 +182,18 @@
       <option value="">Sélectionner un agent</option>
       <!-- Les options seront insérées ici -->
     </select>
+	<select id="SRT-rank" class="mt-2">
+	  <option value="">Choisir un rôle</option>
+	  <option>Recrue</option>
+	  <option>Opérateur secondaire</option>
+	  <option>Breacher</option>
+	  <option>Médic</option>
+	  <option>EOD</option>
+	  <option>Conducteur</option>
+	  <option>THP</option>
+	  <option>Chef d'équipe</option>
+	  <option>Chef d'unité</option>
+	</select>
     <button class="bg-green-500 text-white p-2 rounded mt-2 w-full" onclick="addAgentToUnit('SRT')">Ajouter Agent</button>
     <div class="agent-list" id="SRT-list">
       <!-- Les agents de SRT seront listés ici -->
