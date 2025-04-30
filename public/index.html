@@ -350,27 +350,42 @@ function ajouterVehiculeDansLeDOM(vehicle) {
 }
 
 document.getElementById('agentForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
+  e.preventDefault(); // empêche le rechargement de la page
+
   const name = document.getElementById('name').value;
   const badge = document.getElementById('badge').value;
+
+  // Empêche d’ajouter deux agents avec le même badge
   if (allAgents.find(a => a.badge === badge)) {
     alert("Ce matricule existe déjà !");
     return;
   }
+
   const { error } = await supabase.from('agents').insert([{ name, badge }]);
   if (error) return alert("Erreur ajout agent");
+
+  await fetchAgents();        // recharge la liste des agents
+  updateAgentSelects();       // met à jour les menus déroulants
+  e.target.reset();           // vide les champs du formulaire
 });
 
 document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+
   const model = document.getElementById('model').value;
   const plate = document.getElementById('plate').value;
+
   if (allVehicles.find(v => v.plate === plate)) {
     alert("Cette plaque existe déjà !");
     return;
   }
+
   const { error } = await supabase.from('vehicles').insert([{ model, plate }]);
-  if (error) return alert("Erreur ajout véhicules");
+  if (error) return alert("Erreur ajout véhicule");
+
+  await fetchVehicles();      // recharge la liste
+  updateVehicleSelect();      // met à jour les <select>
+  e.target.reset();           // vide le formulaire
 });
 
 document.getElementById('agentSelect1').addEventListener('change', () => {
@@ -383,29 +398,15 @@ document.getElementById('agentSelect2').addEventListener('change', () => {
   updateAgentSelects();
 });
 
-async function deleteAgent(id) {
-  if (confirm("Supprimer cet agent ?")) {
-    const { error } = await supabase.from('agents').delete().eq('id', id);
-    if (error) {
-      alert("Erreur lors de la suppression de l’agent");
-      console.error(error);
     } else {
-      await fetchAgents();
+      await fetchAgents(); // 🔄 recharge la liste
+      updateAgentSelects(); // 🔁 met à jour les <select>
     }
-  }
-}
 
-async function deleteVehicle(id) {
-  if (confirm("Supprimer ce véhicule ?")) {
-    const { error } = await supabase.from('vehicles').delete().eq('id', id);
-    if (error) {
-      alert("Erreur lors de la suppression du véhicule");
-      console.error(error);
     } else {
-      await fetchVehicles();
+      await fetchVehicles(); // 🔄 recharge liste véhicules
+      updateVehicleSelect(); // 🔁 met à jour le <select>
     }
-  }
-}
 
 document.getElementById('patrolForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -417,10 +418,12 @@ document.getElementById('patrolForm').addEventListener('submit', async (e) => {
   ].filter(Boolean);
   const vehicleId = document.getElementById('vehicleSelect').value;
   if (!unit_type) {
-    if (agents.length === 1) unit_type = 'Lincoln';
-    else if (agents.length === 2) unit_type = 'Adam';
-    else if (agents.length === 3) unit_type = 'Tango';
-  }
+  if (agents.length === 1) unit_type = 'Lincoln';
+  else if (agents.length === 2) unit_type = 'Adam';
+  else if (agents.length === 3) unit_type = 'Tango';
+}
+
+// ⬇️ Toujours faire l’insertion ici, en dehors du if !
 const { data, error: patrolErr } = await supabase
   .from('patrols')
   .insert([{ unit_type, status: 'Disponible', vehicle_id: vehicleId }])
@@ -431,6 +434,10 @@ if (patrolErr) {
   console.error(patrolErr);
   return;
 }
+
+await fetchPatrols();   // 🔄 recharge les patrouilles
+await fetchAgents();    // 🔄 recharge les agents (car certains sont assignés)
+await fetchVehicles();  // 🔄 recharge les véhicules (car un est pris)
 
 const patrolId = data[0].id;
 const inserts = agents.map(agentId => ({ patrol_id: patrolId, agent_id: agentId }));
@@ -564,14 +571,15 @@ async function deletePatrol(id) {
   } else {
     await fetchPatrols();
     await fetchAgents();
+	await fetchVehicles(); // 🔄 au cas où un véhicule était affecté
   }
 }
 
 async function updatePatrolField(patrolId, updates) {
   const { error } = await supabase.from('patrols').update(updates).eq('id', patrolId);
-  if (error) {
-    console.error("Erreur mise à jour patrouille :", error.message);
-  }
+    if (!error) {
+      await fetchPatrols(); // 🔄 pour voir les changements à l'écran
+    }
 }
 
 async function updateSector(patrolId, secteur) {
