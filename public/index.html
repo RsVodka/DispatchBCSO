@@ -1,41 +1,34 @@
 <!DOCTYPE html>
-<html lang="fr" class="dark">
+<html lang="fr">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Dispatch BCSO</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root {
-      --bg-color: #1e1e1e;
-      --card-color: rgba(30, 30, 30, 0.9);
-      --text-color: #f5f5f5;
-      --accent-color: #d4af37;
-      --button-color: #2e7d32;
-    }
-
     body {
-      background-color: var(--bg-color);
-      background-image: url('BCSO_Logo.png');
-      background-size: 600px;
-      background-repeat: no-repeat;
-      background-position: center center;
-      background-attachment: fixed;
-      color: var(--text-color);
-      font-family: 'Roboto', sans-serif;
+  position: relative;
+  background-color: #4E3B31;
+  background-image: url('BCSO_Logo.png');
+  background-size: 600px;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-attachment: fixed;
+}
+    
+    .grid {
+      position: relative;
+      z-index: 1;
     }
-
-    .transparent-card {
-      background-color: var(--card-color);
-      backdrop-filter: blur(4px);
-      border-radius: 16px;
-      padding: 20px;
-      color: var(--text-color);
+    
+    .dropdown {
+      position: relative;
+      width: 100%;
     }
-
+    
     .dropdown-content {
       display: none;
       position: absolute;
-      background-color: var(--bg-color);
+      background-color: #4E3B31;
       width: 100%;
       max-height: 200px;
       overflow-y: auto;
@@ -46,11 +39,11 @@
       animation: dropdown-slide 0.3s ease forwards;
       transform-origin: top center;
     }
-
+    
     .dropdown:hover .dropdown-content {
       display: block;
     }
-
+    
     .dropdown-item {
       padding: 10px 14px;
       display: flex;
@@ -60,15 +53,15 @@
       transition: background-color 0.2s ease;
       border-bottom: 1px solid #eee;
     }
-
+    
     .dropdown-item:last-child {
       border-bottom: none;
     }
-
+    
     .dropdown-item:hover {
       background-color: #f1f5f9;
     }
-
+    
     @keyframes dropdown-slide {
       0% {
         opacity: 0;
@@ -79,42 +72,49 @@
         transform: translateY(0) scaleY(1);
       }
     }
+	/* Amélioration affichage Patrouilles Actives */
+.patrol-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 16px;
+}
 
-    .patrol-card {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      background-color: var(--card-color);
-      backdrop-filter: blur(4px);
-      padding: 16px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      margin-bottom: 16px;
-    }
+.patrol-agents {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
-    .patrol-agents {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .patrol-vehicle {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      text-align: right;
-      gap: 8px;
-    }
-
-    select option:disabled {
-      color: gray;
-      background-color: #f8f9fa;
-      text-decoration: line-through;
-    }
+.patrol-vehicle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  gap: 8px;
+}
+select option:disabled {
+  color: gray;
+  background-color: #f8f9fa;
+}
+.transparent-card {
+  background-color: rgba(0, 0, 0, 0.5); /* Noir semi-transparent */
+  backdrop-filter: blur(4px); /* Ajoute un léger flou derrière */
+  border-radius: 12px;
+  padding: 20px;
+}
   </style>
 </head>
 <body class="p-8">
+
 <header class="flex justify-between items-center mb-6">
+
+  <!-- Menu de navigation -->
   <nav>
     <ul class="flex space-x-6">
       <li><a href="/" class="text-white hover:text-gray-400">Dispatch</a></li>
@@ -126,13 +126,14 @@
 <h1 class="text-3xl font-bold mb-6">📻 Dispatch BCSO</h1>
 
 <div class="grid grid-cols-2 gap-4">
+
   <!-- Ajouter un agent -->
   <div class="scale-90">
     <h2 class="text-2xl font-semibold mb-2">Ajouter un agent</h2>
     <form id="agentForm" class="transparent-card">
       <input type="text" id="name" placeholder="Nom" class="border p-2 m-1 w-full" required>
       <input type="text" id="badge" placeholder="Matricule" class="border p-2 m-1 w-full" required>
-      <button type="submit" class="bg-green-700 text-white p-2 rounded mt-2 w-full">Ajouter Agent</button>
+      <button type="submit" class="bg-green-500 text-white p-2 rounded mt-2 w-full">Ajouter Agent</button>
     </form>
     <div class="dropdown bg-white p-2 mt-4 rounded shadow">
       <button class="w-full text-left">Liste des Agents ▼</button>
@@ -146,13 +147,14 @@
     <form id="vehicleForm" class="transparent-card">
       <input type="text" id="model" placeholder="Modèle" class="border p-2 m-1 w-full" required>
       <input type="text" id="plate" placeholder="Plaque" class="border p-2 m-1 w-full" required>
-      <button type="submit" class="bg-green-700 text-white p-2 rounded mt-2 w-full">Ajouter Véhicule</button>
+      <button type="submit" class="bg-green-500 text-white p-2 rounded mt-2 w-full">Ajouter Véhicule</button>
     </form>
     <div class="dropdown bg-white p-2 mt-4 rounded shadow">
       <button class="w-full text-left">Liste des Véhicules ▼</button>
       <div id="vehiclesList" class="dropdown-content"></div>
     </div>
   </div>
+
 </div>
 
 <!-- Créer une patrouille -->
@@ -165,21 +167,26 @@
       <option value="SRT">SRT</option>
       <option value="SIB">SIB</option>
     </select>
+
     <div class="space-y-2">
       <select id="agentSelect1" class="border p-2 w-full" required>
         <option value="">Sélectionner 1er agent</option>
       </select>
+
       <select id="agentSelect2" class="border p-2 w-full hidden">
         <option value="">Sélectionner 2ème agent (optionnel)</option>
       </select>
+
       <select id="agentSelect3" class="border p-2 w-full hidden">
         <option value="">Sélectionner 3ème agent (optionnel)</option>
       </select>
     </div>
+
     <select id="vehicleSelect" class="border p-2 w-full" required>
       <option value="">Sélectionner Véhicule</option>
     </select>
-    <button type="submit" class="bg-green-700 text-white p-2 rounded mt-2 w-full">Créer Patrouille</button>
+
+    <button type="submit" class="bg-green-500 text-white p-2 rounded mt-2 w-full">Ajouter Agent</button>
   </form>
 </div>
 
@@ -187,8 +194,7 @@
 <div class="mt-8">
   <h2 class="text-2xl font-semibold mb-2">Patrouilles Actives</h2>
   <div class="transparent-card mt-4">
-    <div id="patrols" class="grid gap-4"></div>
-  </div>
+  <div id="patrols" class="grid gap-4"></div>
 </div>
 
 <!-- Ton JavaScript complet commence ici -->
@@ -440,6 +446,7 @@ fetchAgents();
 fetchVehicles();
 fetchPatrols();
 </script>
+
 
 
 </body>
