@@ -210,7 +210,7 @@ select option:disabled {
 
 <!-- 2. Ensuite, ton code Socket.IO -->
 <script>
-  const socket = io();
+  const socket = io("https://dispatchbcso.onrender.com"); // ✅ URL Render
 
   socket.on("agent_ajoute", (agent) => {
     ajouterAgentDansLeDOM(agent);
