@@ -1,7 +1,7 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/", "destination": "/frontend/index.html" },
-    { "source": "/unites", "destination": "/frontend/unites.html" }
+    { "source": "/", "destination": "/public/index.html" },
+    { "source": "/unites", "destination": "/public/unites.html" }
   ]
 }
