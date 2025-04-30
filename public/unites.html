@@ -5,16 +5,11 @@
   <title>Unités Dispatch BCSO</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {
-      position: relative;
-      background-color: #4E3B31;
-      background-image: url('BCSO_Logo.png');
-      background-size: 600px;
-      background-repeat: no-repeat;
-      background-position: center center;
-      background-attachment: fixed;
-      color: white;
-    }
+	body {
+	  background-color: #4E3B31;
+	  color: white;
+	}
+
 
     .grid {
       display: grid;
@@ -130,20 +125,32 @@
 </head>
 <body class="p-8">
 
-<header class="flex justify-between items-center mb-6">
-  <!-- Menu de navigation -->
+<header class="flex items-center justify-between mb-6">
+  <!-- Logo à gauche -->
+  <div class="flex items-center">
+    <img src="BCSO_Logo.png" alt="Logo BCSO" class="h-28 w-auto" />
+  </div>
+
+  <!-- Menu à droite -->
   <nav>
-    <ul class="flex space-x-6">
-      <li><a href="/" class="text-white hover:text-gray-400">Dispatch</a></li>
-      <li><a href="/unites.html" class="text-white hover:text-gray-400">Unités</a></li>
+    <ul class="flex space-x-4">
+      <li>
+        <a href="/" class="flex items-center gap-2 text-white px-4 py-2 rounded-full hover:bg-white/10 transition">
+          Dispatch
+        </a>
+      </li>
+      <li>
+        <a href="/unites.html" class="flex items-center gap-2 text-white px-4 py-2 rounded-full hover:bg-white/10 transition">
+          Unités
+        </a>
+      </li>
     </ul>
   </nav>
 </header>
 
-<h1 class="text-3xl font-bold mb-6">Unités BCSO</h1>
+<h1 class="text-3xl font-bold text-center mb-6">Unités BCSO</h1>
 
 <!-- Ajouter des agents dans les unités -->
-<h2 class="text-2xl font-semibold mb-2">Ajouter des agents dans les unités</h2>
 <div class="grid grid-cols-3 gap-4 mt-6">
 
   <!-- Unité SIB -->
