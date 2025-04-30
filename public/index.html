@@ -203,7 +203,6 @@ let allAgents = [];
 let allVehicles = [];
 let allPatrols = [];
 
-// Récupérer tous les agents
 async function fetchAgents() {
   const res = await fetch('/api/agents');
   allAgents = await res.json();
@@ -211,7 +210,6 @@ async function fetchAgents() {
   updateAgentSelects();
 }
 
-// Récupérer tous les véhicules
 async function fetchVehicles() {
   const res = await fetch('/api/vehicles');
   allVehicles = await res.json();
@@ -219,14 +217,12 @@ async function fetchVehicles() {
   updateVehicleSelect();
 }
 
-// Récupérer toutes les patrouilles
 async function fetchPatrols() {
   const res = await fetch('/api/patrols');
   allPatrols = await res.json();
   renderPatrols();
 }
 
-// Afficher les agents dans le menu déroulant
 function renderAgentsDropdown() {
   const agentsList = document.getElementById('agentsList');
   agentsList.innerHTML = '';
@@ -241,7 +237,6 @@ function renderAgentsDropdown() {
   });
 }
 
-// Afficher les véhicules dans le menu déroulant
 function renderVehiclesDropdown() {
   const vehiclesList = document.getElementById('vehiclesList');
   vehiclesList.innerHTML = '';
@@ -256,41 +251,31 @@ function renderVehiclesDropdown() {
   });
 }
 
-// Mettre à jour les menus de sélection d'agents
 function updateAgentSelects() {
   const selects = [document.getElementById('agentSelect1'), document.getElementById('agentSelect2'), document.getElementById('agentSelect3')];
   const selectedIds = selects.map(s => s.value).filter(Boolean);
-
-  // ➔ Trouver tous les badges utilisés dans les patrouilles actives
   const usedBadges = [];
   Object.values(allPatrols).forEach(patrol => {
     patrol.agents.forEach(agent => {
       usedBadges.push(agent.badge);
     });
   });
-
   selects.forEach(select => {
     const prev = select.value;
     select.innerHTML = '<option value="">Sélectionner agent</option>';
-
     allAgents.forEach(agent => {
       const option = document.createElement('option');
       option.value = agent.id;
       option.textContent = `[${agent.badge}] ${agent.name}`;
-
-      // ➔ Désactiver si agent est utilisé ailleurs
       if (usedBadges.includes(agent.badge) && prev !== agent.id.toString()) {
         option.disabled = true;
       }
-
       select.appendChild(option);
     });
-
     select.value = prev;
   });
 }
 
-// Mettre à jour les menus de sélection de véhicules
 function updateVehicleSelect() {
   const vehicleSelect = document.getElementById('vehicleSelect');
   vehicleSelect.innerHTML = '<option value="">Sélectionner Véhicule</option>';
@@ -302,51 +287,40 @@ function updateVehicleSelect() {
   });
 }
 
-// Ajouter un agent
 document.getElementById('agentForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = document.getElementById('name').value;
   const badge = document.getElementById('badge').value;
-  
   if (allAgents.find(a => a.badge === badge)) {
     alert("Ce matricule existe déjà !");
     return;
   }
-
   await fetch('/api/agents', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, badge })
   });
-
-  await fetchAgents(); // 🔥 Recharge après ajout
+  await fetchAgents();
   e.target.reset();
 });
 
-// Ajouter un véhicule
 document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const model = document.getElementById('model').value;
   const plate = document.getElementById('plate').value;
-  
   if (allVehicles.find(v => v.plate === plate)) {
     alert("Cette plaque existe déjà !");
     return;
   }
-
   await fetch('/api/vehicles', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ model, plate })
   });
-
-  await fetchVehicles(); // 🔥 Recharge après ajout
+  await fetchVehicles();
   e.target.reset();
 });
 
-// Ouvrir/fermer les menus déroulants au hover (déjà géré en CSS hover)
-
-// Ajout progressif de l'agent 2 et 3
 document.getElementById('agentSelect1').addEventListener('change', () => {
   document.getElementById('agentSelect2').classList.toggle('hidden', !document.getElementById('agentSelect1').value);
   updateAgentSelects();
@@ -364,7 +338,6 @@ async function deleteAgent(id) {
   }
 }
 
-
 async function deleteVehicle(id) {
   if (confirm("Supprimer ce véhicule ?")) {
     await fetch(`/api/vehicles?id=${id}`, { method: 'DELETE' });
@@ -372,7 +345,6 @@ async function deleteVehicle(id) {
   }
 }
 
-// Création d'une patrouille
 document.getElementById('patrolForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   let unit_type = document.getElementById('unit_type').value;
@@ -382,105 +354,97 @@ document.getElementById('patrolForm').addEventListener('submit', async (e) => {
     document.getElementById('agentSelect3').value
   ].filter(Boolean);
   const vehicleId = document.getElementById('vehicleSelect').value;
-
   if (!unit_type) {
     if (agents.length === 1) unit_type = 'Lincoln';
     else if (agents.length === 2) unit_type = 'Adam';
     else if (agents.length === 3) unit_type = 'Tango';
   }
-
   await fetch('/api/patrols', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ unit_type, agentIds: agents, vehicleId })
   });
-
   fetchPatrols();
   fetchAgents();
   fetchVehicles();
-  // Remettre les sélections à zéro
-document.getElementById('unit_type').value = "";
-document.getElementById('agentSelect1').value = "";
-document.getElementById('agentSelect2').value = "";
-document.getElementById('agentSelect2').classList.add('hidden');
-document.getElementById('agentSelect3').value = "";
-document.getElementById('agentSelect3').classList.add('hidden');
-document.getElementById('vehicleSelect').value = "";
+  document.getElementById('unit_type').value = "";
+  document.getElementById('agentSelect1').value = "";
+  document.getElementById('agentSelect2').value = "";
+  document.getElementById('agentSelect2').classList.add('hidden');
+  document.getElementById('agentSelect3').value = "";
+  document.getElementById('agentSelect3').classList.add('hidden');
+  document.getElementById('vehicleSelect').value = "";
 });
 
-// Affichage des patrouilles
+function adjustPatrolName(originalName, agents) {
+  const count = agents.length;
+  if (count === 1) {
+    if (originalName.startsWith("Adam")) return originalName.replace("Adam", "Lincoln");
+    if (originalName.startsWith("Tango")) return originalName.replace("Tango", "Lincoln");
+  } else {
+    if (originalName.startsWith("Tango")) return originalName.replace("Tango", "Adam");
+  }
+  return originalName;
+}
+
 function renderPatrols() {
   const patrolsDiv = document.getElementById('patrols');
   patrolsDiv.innerHTML = '';
-
   Object.keys(allPatrols).forEach(id => {
     const patrol = allPatrols[id];
     const div = document.createElement('div');
-    div.className = "patrol-card"; // <-- Ici changement important
-
+    div.className = "patrol-card";
+    const adjustedName = adjustPatrolName(patrol.unit_type, patrol.agents);
     const agentsHTML = patrol.agents.map(agent => `
       <div class="flex justify-between items-center">
         <span>[${agent.badge}] ${agent.name}</span>
         <button onclick="removeAgentFromPatrol(${id}, ${agent.id})" class="ml-2 text-red-500">❌</button>
       </div>
     `).join('');
-
     div.innerHTML = `
       <div class="patrol-agents">
-        <h3 class="font-bold">
-		${patrol.unit_type}
-	${patrol.agents && patrol.agents[0] ? patrol.agents[0].badge : ''}
-	</h3>
+        <h3 class="font-bold">${adjustedName} ${patrol.agents[0]?.badge || ''}</h3>
         ${agentsHTML}
       </div>
       <div class="flex flex-col items-center justify-center">
-    <select onchange="updateSector(${id}, this.value)" class="text-black bg-white p-1 rounded my-2">
-      <option value="">Définir un secteur</option>
-      <option value="Secteur 1">Secteur 1</option>
-      <option value="Secteur 2">Secteur 2</option>
-      <option value="Secteur 3">Secteur 3</option>
-      <option value="Secteur 4">Secteur 4</option>
-      <option value="Secteur 5">Secteur 5</option>
-      <option value="Secteur 6">Secteur 6</option>
-      <option value="Hors juridiction">Hors juridiction</option>
-    </select>
-  </div>
-  <div class="patrol-vehicle">
-        <span class="font-bold">${patrol.vehicle_model || 'Modèle inconnu'} [${patrol.vehicle_plate?.replace(/\[|\]/g, '') || 'Plaque inconnue'}]</span>
+        <select onchange="updateSector(${id}, this.value)" class="text-black bg-white p-1 rounded my-2">
+          <option value="">Définir un secteur</option>
+          <option value="Secteur 1">Secteur 1</option>
+          <option value="Secteur 2">Secteur 2</option>
+          <option value="Secteur 3">Secteur 3</option>
+          <option value="Secteur 4">Secteur 4</option>
+          <option value="Secteur 5">Secteur 5</option>
+          <option value="Secteur 6">Secteur 6</option>
+          <option value="Hors juridiction">Hors juridiction</option>
+        </select>
+      </div>
+      <div class="patrol-vehicle">
+        <span class="font-bold">${patrol.vehicle_model || 'Modèle inconnu'} [${patrol.vehicle_plate?.replace(/[\[\]]/g, '') || 'Plaque inconnue'}]</span>
         <button onclick="deletePatrol(${id})" class="text-red-500 mt-2">Supprimer Patrouille ❌</button>
       </div>
     `;
-
     patrolsDiv.appendChild(div);
   });
 }
 
 async function removeAgentFromPatrol(patrolId, agentId) {
   if (!confirm("Retirer cet agent de la patrouille ?")) return;
-
-  await fetch(`/api/patrols/remove-agent?patrolId=${patrolId}&agentId=${agentId}`, {
-    method: 'DELETE'
-  });
-
+  await fetch(`/api/patrols/remove-agent?patrolId=${patrolId}&agentId=${agentId}`, { method: 'DELETE' });
   fetchPatrols();
   fetchAgents();
 }
 
-// Supprimer une patrouille
 async function deletePatrol(id) {
   if (!confirm("Supprimer cette patrouille complètement ?")) return;
-
   await fetch(`/api/patrols?id=${id}`, { method: 'DELETE' });
   fetchPatrols();
   fetchAgents();
 }
 
-
 function updateSector(patrolId, secteur) {
   alert(`📍 Patrouille ${patrolId} assignée à ${secteur}`);
 }
 
-// Initialisation
 fetchAgents();
 fetchVehicles();
 fetchPatrols();
