@@ -233,9 +233,32 @@ async function fetchVehicles() {
 }
 
 async function fetchPatrols() {
-  const { data, error } = await supabase.from('patrols').select('*');
-  if (error) console.error(error);
-  allPatrols = data || [];
+  const { data, error } = await supabase
+    .from('patrols')
+    .select(`
+      *,
+      agents:patrol_agents (
+        agent:agent_id (
+          id, name, badge
+        )
+      ),
+      vehicle:vehicle_id (
+        id, model, plate
+      )
+    `);
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  allPatrols = (data || []).map(p => ({
+    ...p,
+    agents: (p.agents || []).map(a => a.agent),
+    vehicle_model: p.vehicle?.model || '',
+    vehicle_plate: p.vehicle?.plate || ''
+  }));
+
   renderPatrols();
 }
 
