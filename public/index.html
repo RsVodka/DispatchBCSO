@@ -266,11 +266,14 @@ async function fetchPatrols() {
     sector: p.sector,
     vehicle_model: p.vehicle?.model || '',
     vehicle_plate: p.vehicle?.plate || '',
-    agents: (p.patrol_agents || []).map(pa => ({
-      id: pa.agent?.id,
-      name: pa.agent?.name,
-      badge: pa.agent?.badge
-    })).filter(a => a.id)
+    agents: (p.patrol_agents || [])
+      .filter(pa => pa.agent)
+      .map(pa => ({
+        id: pa.agent.id,
+        name: pa.agent.name,
+        badge: pa.agent.badge
+      }))
+    .filter(a => a.id)
   }));
 
   renderPatrols();
