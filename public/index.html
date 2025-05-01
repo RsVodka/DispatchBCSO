@@ -253,14 +253,13 @@ async function fetchPatrols() {
   }
 
   allPatrols = (data || []).map(p => ({
-    ...p,
-    agents: (p.agents || []).map(a => a.agent).filter(Boolean),
-    vehicle_model: p.vehicle?.model || '',
-    vehicle_plate: p.vehicle?.plate || ''
-  }));
+  ...p,
+  agents: (p.agents || []).map(a => a.agent).filter(Boolean),
+  vehicle_model: p.vehicle?.model || '',
+  vehicle_plate: p.vehicle?.plate || ''
+}));
 
-  renderPatrols();
-}
+renderPatrols(); // ✅ pas de écrasement ensuite
 
 function renderAgentsDropdown() {
   const agentsList = document.getElementById('agentsList');
@@ -569,8 +568,13 @@ async function removeAgentFromPatrol(patrolId, agentId) {
 }
 
 async function updateStatus(patrolId, statut) {
-
-  await updatePatrolField(patrolId, { status: statut });
+  const { error } = await supabase.from('patrols').update({ status: statut }).eq('id', patrolId);
+  if (error) {
+    console.error("Erreur statut :", error.message);
+  } else {
+    localStorage.setItem(`statut_${patrolId}`, statut); // ✅ MAJ localStorage
+    await fetchPatrols(); // ✅ Rafraîchir l'affichage
+  }
 }
 
 async function deletePatrol(id) {
@@ -601,9 +605,8 @@ async function updateSector(patrolId, secteur) {
   if (error) {
     console.error("Erreur mise à jour secteur :", error.message);
   } else {
-    fetchAgents();
-    fetchVehicles();
-    fetchPatrols();
+    localStorage.setItem(`secteur_${patrolId}`, secteur); // ✅ MAJ localStorage
+    await fetchPatrols(); // ✅ Rafraîchir l'affichage
   }
 }
 
