@@ -276,23 +276,6 @@ async function fetchPatrols() {
   renderPatrols();
 }
 
-  allPatrols = data.map(p => ({
-    id: p.id,
-    unit_type: p.unit_type,
-    status: p.status,
-    sector: p.sector,
-    vehicle_model: p.vehicle?.model || '',
-    vehicle_plate: p.vehicle?.plate || '',
-    agents: (p.patrol_agents || []).map(pa => ({
-      id: pa.agent?.id,
-      name: pa.agent?.name,
-      badge: pa.agent?.badge
-    })).filter(a => a.id)
-  }));
-
-  renderPatrols();
-}
-
 function renderAgentsDropdown() {
   const agentsList = document.getElementById('agentsList');
   agentsList.innerHTML = '';
