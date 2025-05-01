@@ -247,11 +247,6 @@ async function fetchPatrols() {
       )
     `);
 
-  if (error) {
-    console.error(error);
-    return;
-  }
-
   allPatrols = (data || []).map(p => ({
     ...p,
     agents: (p.agents || []).map(a => ({
