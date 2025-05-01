@@ -236,22 +236,22 @@ async function fetchPatrols() {
   const { data, error } = await supabase
     .from('patrols')
     .select(`
-  id,
-  unit_type,
-  status,
-  sector,
-  vehicle:vehicle_id (
-    id,
-    model,
-    plate
-  ),
-  patrol_agents (
-    agent:agent_id (
-      id,
-      name,
-      badge
+	  id,
+	  unit_type,
+	  status,
+	  sector,
+	  vehicle:vehicle_id (
+		id,
+		model,
+		plate
+	  ),
+	  patrol_agents (
+        agent:agent_id (
+		  id,
+		  name,
+		  badge
+        )
     )
-  )
 `);
 
   if (error) {
