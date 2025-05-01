@@ -236,26 +236,37 @@ async function fetchPatrols() {
   const { data, error } = await supabase
     .from('patrols')
     .select(`
-      *,
-      agents:patrol_agents (
+      id,
+      unit_type,
+      status,
+      sector,
+      vehicle:vehicle_id (
+        id, model, plate
+      ),
+      patrol_agents (
         agent:agent_id (
           id, name, badge
         )
-      ),
-      vehicle:vehicle_id (
-        id, model, plate
       )
     `);
 
-  allPatrols = (data || []).map(p => ({
-    ...p,
-    agents: (p.agents || []).map(a => ({
-      id: a.agent?.id,
-      name: a.agent?.name,
-      badge: a.agent?.badge
-    })).filter(agent => agent.id),
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  allPatrols = data.map(p => ({
+    id: p.id,
+    unit_type: p.unit_type,
+    status: p.status,
+    sector: p.sector,
     vehicle_model: p.vehicle?.model || '',
-    vehicle_plate: p.vehicle?.plate || ''
+    vehicle_plate: p.vehicle?.plate || '',
+    agents: (p.patrol_agents || []).map(pa => ({
+      id: pa.agent?.id,
+      name: pa.agent?.name,
+      badge: pa.agent?.badge
+    })).filter(a => a.id)
   }));
 
   renderPatrols();
@@ -515,8 +526,8 @@ function renderPatrols() {
     `).join('');
 
     div.innerHTML = `
-      <div class="patrol-agents">
-        <h3 class="font-bold">${adjustedName} ${agentCount}</h3>
+      <div class="mt-2 text-white space-y-1">
+		${patrol.agents.map(agent => `<div>👤 [${agent.badge}] ${agent.name}</div>`).join('')}
         ${agentsHTML}
       </div>
       <div class="flex flex-row gap-2 items-center justify-center flex-wrap">
