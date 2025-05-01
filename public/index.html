@@ -254,7 +254,7 @@ async function fetchPatrols() {
 
   allPatrols = (data || []).map(p => ({
     ...p,
-    agents: (p.agents || []).map(a => a.agent),
+    agents: (p.agents || []).map(a => a.agent).filter(Boolean),
     vehicle_model: p.vehicle?.model || '',
     vehicle_plate: p.vehicle?.plate || ''
   }));
