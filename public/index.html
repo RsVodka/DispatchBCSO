@@ -254,7 +254,6 @@ async function fetchPatrols() {
     )
   `);
 
-
   if (error) {
     console.error("Erreur dans fetchPatrols:", error);
     return;
@@ -525,12 +524,15 @@ function renderPatrols() {
     const savedSector = localStorage.getItem(`secteur_${id}`) || "";
     const savedStatus = localStorage.getItem(`statut_${id}`) || "disponible";
 
-    const agentsHTML = patrol.agents.map(agent => `
-      <div class="flex justify-between items-center">
-        <span>[${agent.badge}] ${agent.name}</span>
-        <button onclick="removeAgentFromPatrol(${id}, ${agent.id})" class="ml-2 text-red-500">❌</button>
-      </div>
+    const agentsHTML = (patrol.agents || [])
+	  .filter(agent => agent) // Ignore null
+	  .map(agent => `
+        <div class="flex justify-between items-center">
+          <span>[${agent.badge}] ${agent.name}</span>
+          <button onclick="removeAgentFromPatrol(${id}, ${agent.id})" class="ml-2 text-red-500">❌</button>
+        </div>
     `).join('');
+
 
     div.innerHTML = `
   <div class="patrol-agents">
