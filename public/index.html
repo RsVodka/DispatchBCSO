@@ -253,13 +253,14 @@ async function fetchPatrols() {
   }
 
   allPatrols = (data || []).map(p => ({
-  ...p,
-  agents: (p.agents || []).map(a => a.agent).filter(Boolean),
-  vehicle_model: p.vehicle?.model || '',
-  vehicle_plate: p.vehicle?.plate || ''
-}));
+    ...p,
+    agents: (p.agents || []).map(a => a.agent).filter(Boolean),
+    vehicle_model: p.vehicle?.model || '',
+    vehicle_plate: p.vehicle?.plate || ''
+  }));
 
-renderPatrols(); // ✅ pas de écrasement ensuite
+  renderPatrols(); // ✅ appeler la fonction
+}
 
 function renderAgentsDropdown() {
   const agentsList = document.getElementById('agentsList');
