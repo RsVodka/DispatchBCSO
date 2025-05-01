@@ -254,12 +254,16 @@ async function fetchPatrols() {
 
   allPatrols = (data || []).map(p => ({
     ...p,
-    agents: (p.agents || []).map(a => a.agent).filter(Boolean),
+    agents: (p.agents || []).map(a => ({
+      id: a.agent?.id,
+      name: a.agent?.name,
+      badge: a.agent?.badge
+    })).filter(agent => agent.id),
     vehicle_model: p.vehicle?.model || '',
     vehicle_plate: p.vehicle?.plate || ''
   }));
 
-  renderPatrols(); // ✅ appeler la fonction
+  renderPatrols();
 }
 
 function renderAgentsDropdown() {
