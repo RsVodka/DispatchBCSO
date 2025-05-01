@@ -251,8 +251,9 @@ async function fetchPatrols() {
           name,
           badge
         )
-      )
-    `);
+    )
+  `);
+
 
   if (error) {
     console.error("Erreur dans fetchPatrols:", error);
@@ -269,12 +270,11 @@ async function fetchPatrols() {
     agents: (p.patrol_agents || [])
       .filter(pa => pa.agent)
       .map(pa => ({
-        id: pa.agent.id,
-        name: pa.agent.name,
-        badge: pa.agent.badge
-      }))
-    .filter(a => a.id)
-  }));
+      id: pa.agent.id,
+      name: pa.agent.name,
+      badge: pa.agent.badge
+    }))
+}));
 
   renderPatrols();
 }
