@@ -251,11 +251,11 @@ async function fetchPatrols() {
           name,
           badge
         )
-    )
-  `);
+      )
+    `);
 
   if (error) {
-    console.error("Erreur dans fetchPatrols:", error);
+    console.error("Erreur Supabase fetchPatrols:", error);
     return;
   }
 
@@ -269,11 +269,11 @@ async function fetchPatrols() {
     agents: (p.patrol_agents || [])
       .filter(pa => pa.agent)
       .map(pa => ({
-      id: pa.agent.id,
-      name: pa.agent.name,
-      badge: pa.agent.badge
-    }))
-}));
+        id: pa.agent.id,
+        name: pa.agent.name,
+        badge: pa.agent.badge
+      }))
+  }));
 
   renderPatrols();
 }
