@@ -501,6 +501,9 @@ function renderPatrols() {
     div.className = "patrol-card";
 
     const adjustedName = adjustPatrolName(patrol.unit_type, patrol.agents);
+    const agentsList = patrol.agents.map(agent => `[${agent.badge}] ${agent.name}`).join(' - ');
+    const agentCount = patrol.agents.length.toString().padStart(2, '0');
+
     const savedSector = localStorage.getItem(`secteur_${id}`) || "";
     const savedStatus = localStorage.getItem(`statut_${id}`) || "disponible";
 
@@ -513,7 +516,7 @@ function renderPatrols() {
 
     div.innerHTML = `
       <div class="patrol-agents">
-        <h3 class="font-bold">${adjustedName} ${patrol.agents[0]?.badge || ''}</h3>
+        <h3 class="font-bold">${adjustedName} ${agentCount}</h3>
         ${agentsHTML}
       </div>
       <div class="flex flex-row gap-2 items-center justify-center flex-wrap">
