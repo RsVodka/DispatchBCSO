@@ -400,6 +400,7 @@ document.getElementById('agentSelect2').addEventListener('change', () => {
 
 document.getElementById('patrolForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+
   let unit_type = document.getElementById('unit_type').value;
   const agents = [
     document.getElementById('agentSelect1').value,
@@ -407,47 +408,47 @@ document.getElementById('patrolForm').addEventListener('submit', async (e) => {
     document.getElementById('agentSelect3').value
   ].filter(Boolean);
   const vehicleId = document.getElementById('vehicleSelect').value;
+
+  if (!vehicleId || agents.length === 0) {
+    alert("Sélectionne au moins un agent et un véhicule !");
+    return;
+  }
+
   if (!unit_type) {
   if (agents.length === 1) unit_type = 'Lincoln';
   else if (agents.length === 2) unit_type = 'Adam';
   else if (agents.length === 3) unit_type = 'Tango';
-}
+} 
 
-// ⬇️ Toujours faire l’insertion ici, en dehors du if !
-const { data, error: patrolErr } = await supabase
-  .from('patrols')
-  .insert([{ unit_type, status: 'Disponible', vehicle_id: vehicleId }])
-  .select();
+  const { data, error: patrolErr } = await supabase
+    .from('patrols')
+    .insert([{ unit_type, status: 'Disponible', vehicle_id: vehicleId }])
+    .select();
 
-if (patrolErr) {
-  alert("Erreur création patrouille");
-  console.error(patrolErr);
-  return;
-}
+  if (patrolErr || !data || !data[0]) {
+    alert("Erreur création patrouille");
+    console.error(patrolErr);
+    return;
+  }
 
-await fetchPatrols();   // 🔄 recharge les patrouilles
-await fetchAgents();    // 🔄 recharge les agents (car certains sont assignés)
-await fetchVehicles();  // 🔄 recharge les véhicules (car un est pris)
+  const patrolId = data[0].id;
+  const inserts = agents.map(agentId => ({ patrol_id: patrolId, agent_id: agentId }));
+  const { error: linkErr } = await supabase.from('patrol_agents').insert(inserts);
+  if (linkErr) {
+    alert("Erreur assignation agents");
+    console.error(linkErr);
+    return;
+  }
 
-const patrolId = data[0].id;
-const inserts = agents.map(agentId => ({ patrol_id: patrolId, agent_id: agentId }));
-const { error: linkErr } = await supabase.from('patrol_agents').insert(inserts);
-if (linkErr) {
-  alert("Erreur assignation des agents");
-  console.error(linkErr);
-  return;
-}
+  // Rafraîchissement
+  await fetchPatrols();
+  await fetchAgents();
+  await fetchVehicles();
 
-await fetchPatrols();
-  fetchAgents();
-  fetchVehicles();
-  document.getElementById('unit_type').value = "";
-  document.getElementById('agentSelect1').value = "";
-  document.getElementById('agentSelect2').value = "";
+  // Reset formulaire
+  e.target.reset();
   document.getElementById('agentSelect2').classList.add('hidden');
-  document.getElementById('agentSelect3').value = "";
   document.getElementById('agentSelect3').classList.add('hidden');
-  document.getElementById('vehicleSelect').value = "";
 });
 
 function adjustPatrolName(originalName, agents) {
@@ -582,6 +583,33 @@ async function updateSector(patrolId, secteur) {
     fetchPatrols();
   }
 }
+
+async function deleteAgent(id) {
+  if (confirm("Supprimer cet agent ?")) {
+    const { error } = await supabase.from('agents').delete().eq('id', id);
+    if (error) {
+      alert("Erreur suppression agent");
+      console.error(error);
+    } else {
+      await fetchAgents(); // 🔄 recharge la liste visuellement
+      updateAgentSelects(); // 🔁 met à jour les menus déroulants
+    }
+  }
+}
+
+async function deleteVehicle(id) {
+  if (confirm("Supprimer ce véhicule ?")) {
+    const { error } = await supabase.from('vehicles').delete().eq('id', id);
+    if (error) {
+      alert("Erreur suppression véhicule");
+      console.error(error);
+    } else {
+      await fetchVehicles(); // 🔄 recharge la liste visuellement
+      updateVehicleSelect(); // 🔁 met à jour le menu
+    }
+  }
+}
+
 
 // Appels initiaux pour charger les données dès l'ouverture de la page
 window.onload = async () => {
