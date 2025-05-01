@@ -526,32 +526,34 @@ function renderPatrols() {
     `).join('');
 
     div.innerHTML = `
-      <div class="mt-2 text-white space-y-1">
-		${patrol.agents.map(agent => `<div>👤 [${agent.badge}] ${agent.name}</div>`).join('')}
-        ${agentsHTML}
-      </div>
-      <div class="flex flex-row gap-2 items-center justify-center flex-wrap">
-        <select onchange="updateSector(${id}, this.value)" class="text-black bg-white p-1 rounded my-2">
-          <option value="Secteur 1" ${savedSector === "Secteur 1" ? "selected" : ""}>Secteur 1</option>
-          <option value="Secteur 2" ${savedSector === "Secteur 2" ? "selected" : ""}>Secteur 2</option>
-          <option value="Secteur 3" ${savedSector === "Secteur 3" ? "selected" : ""}>Secteur 3</option>
-          <option value="Secteur 4" ${savedSector === "Secteur 4" ? "selected" : ""}>Secteur 4</option>
-          <option value="Secteur 5" ${savedSector === "Secteur 5" ? "selected" : ""}>Secteur 5</option>
-          <option value="Secteur 6" ${savedSector === "Secteur 6" ? "selected" : ""}>Secteur 6</option>
-          <option value="Hors Juridiction" ${savedSector === "Hors Juridiction" ? "selected" : ""}>Hors Juridiction</option>
-        </select>
+  <div class="patrol-agents">
+    <h3 class="font-bold text-white">👮 ${adjustPatrolName(patrol.unit_type, patrol.agents)} ${patrol.agents[0]?.badge || '??'}</h3>
+    <div class="mt-2 text-white space-y-1">
+      ${patrol.agents.map(agent => `<div>👤 [${agent.badge}] ${agent.name}</div>`).join('')}
+    </div>
+  </div>
+  <div class="flex flex-row gap-2 items-center justify-center flex-wrap">
+    <select onchange="updateSector(${id}, this.value)" class="text-black bg-white p-1 rounded my-2">
+      <option value="Secteur 1" ${savedSector === "Secteur 1" ? "selected" : ""}>Secteur 1</option>
+      <option value="Secteur 2" ${savedSector === "Secteur 2" ? "selected" : ""}>Secteur 2</option>
+      <option value="Secteur 3" ${savedSector === "Secteur 3" ? "selected" : ""}>Secteur 3</option>
+      <option value="Secteur 4" ${savedSector === "Secteur 4" ? "selected" : ""}>Secteur 4</option>
+      <option value="Secteur 5" ${savedSector === "Secteur 5" ? "selected" : ""}>Secteur 5</option>
+      <option value="Secteur 6" ${savedSector === "Secteur 6" ? "selected" : ""}>Secteur 6</option>
+      <option value="Hors Juridiction" ${savedSector === "Hors Juridiction" ? "selected" : ""}>Hors Juridiction</option>
+    </select>
 
-        <select onchange="updateStatus(${id}, this.value)" class="text-black bg-white p-1 rounded my-2">
-          <option value="disponible" ${savedStatus === "disponible" ? "selected" : ""}>Disponible</option>
-          <option value="occupé" ${savedStatus === "occupé" ? "selected" : ""}>Occupé</option>
-        </select>
-      </div>
+    <select onchange="updateStatus(${id}, this.value)" class="text-black bg-white p-1 rounded my-2">
+      <option value="disponible" ${savedStatus === "disponible" ? "selected" : ""}>Disponible</option>
+      <option value="occupé" ${savedStatus === "occupé" ? "selected" : ""}>Occupé</option>
+    </select>
+  </div>
 
-      <div class="patrol-vehicle">
-        <span class="font-bold">${patrol.vehicle_model || 'Modèle inconnu'} [${patrol.vehicle_plate?.replace(/[\[\]]/g, '') || 'Plaque inconnue'}]</span>
-        <button onclick="deletePatrol(${id})" class="text-red-500 mt-2">Supprimer Patrouille ❌</button>
-      </div>
-    `;
+  <div class="patrol-vehicle">
+    <span class="font-bold">${patrol.vehicle_model || 'Modèle inconnu'} [${patrol.vehicle_plate?.replace(/[\[\]]/g, '') || 'Plaque inconnue'}]</span>
+    <button onclick="deletePatrol(${id})" class="text-red-500 mt-2">Supprimer Patrouille ❌</button>
+  </div>
+`;
 
     patrolsDiv.appendChild(div);
   });
