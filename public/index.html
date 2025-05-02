@@ -254,8 +254,10 @@ async function fetchPatrols() {
         .select('id, name, badge')
         .eq('id', link.agent_id)
         .single();
-      if (agent) agents.push(agent);
-    }
+      if (agent && agent.name && agent.badge) {
+		agents.push(agent);
+	  }
+}
 
     const { data: vehicle } = await supabase
       .from('vehicles')
@@ -523,14 +525,13 @@ function renderPatrols() {
     const savedStatus = localStorage.getItem(`statut_${id}`) || "disponible";
 
     const agentsHTML = (patrol.agents || [])
-	  .filter(agent => agent) // Ignore null
-	  .map(agent => `
+      .filter(agent => agent && agent.name && agent.badge)
+      .map(agent => `
         <div class="flex justify-between items-center">
-          <span>[${agent.badge}] ${agent.name}</span>
+          <span>[${agent.badge || '??'}] ${agent.name || 'Anonyme'}</span>
           <button onclick="removeAgentFromPatrol(${id}, ${agent.id})" class="ml-2 text-red-500">❌</button>
         </div>
-    `).join('');
-
+      `).join('');
 
     div.innerHTML = `
   <div class="patrol-agents">
