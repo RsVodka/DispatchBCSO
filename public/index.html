@@ -249,14 +249,19 @@ async function fetchPatrols() {
 
     const agents = [];
     for (const link of links || []) {
+	  console.log("🔍 lien d’agent détecté :", link);
+
       const { data: agent } = await supabase
         .from('agents')
         .select('id, name, badge')
         .eq('id', link.agent_id)
         .single();
-      if (agent && agent.name && agent.badge) {
-		agents.push(agent);
-	  }
+
+    console.log("👤 agent récupéré :", agent);
+
+    if (agent && agent.name && agent.badge) {
+    agents.push(agent);
+    }
 }
 
     const { data: vehicle } = await supabase
