@@ -233,50 +233,52 @@ async function fetchVehicles() {
 }
 
 async function fetchPatrols() {
-  const { data: patrols, error: patrolErr } = await supabase.from('patrols').select('*');
+  const { data: patrols, error: patrolErr } = await supabase
+    .from('patrols')
+    .select(`
+      id,
+      unit_type,
+      status,
+      sector,
+      vehicle:vehicle_id (
+        id,
+        model,
+        plate
+      ),
+      patrol_agents (
+        agent:agent_id (
+          id,
+          name,
+          badge
+        )
+      )
+    `);
+
   if (patrolErr) {
-    console.error("Erreur chargement des patrouilles:", patrolErr);
+    console.error("❌ Erreur chargement des patrouilles:", patrolErr);
     return;
   }
 
-  const results = [];
+  const results = (patrols || []).map(p => ({
+    id: p.id,
+    unit_type: p.unit_type,
+    status: p.status,
+    sector: p.sector,
+    vehicle_model: p.vehicle?.model || '',
+    vehicle_plate: p.vehicle?.plate || '',
+    agents: (p.patrol_agents || [])
+      .filter(pa => pa.agent)
+      .map(pa => ({
+        id: pa.agent.id,
+        name: pa.agent.name,
+        badge: pa.agent.badge
+      }))
+  }));
 
-  for (const patrol of patrols) {
-    const { data: links } = await supabase
-      .from('patrol_agents')
-      .select('agent_id')
-      .eq('patrol_id', patrol.id);
-
-    const agents = [];
-    for (const link of links || []) {
-	  console.log("🔍 lien d’agent détecté :", link);
-
-      const { data: agent } = await supabase
-        .from('agents')
-        .select('id, name, badge')
-        .eq('id', link.agent_id)
-        .single();
-
-    console.log("👤 agent récupéré :", agent);
-
-    if (agent && agent.name && agent.badge) {
-    agents.push(agent);
-    }
+  allPatrols = results;
+  console.log("✅ allPatrols correctement construits :", allPatrols);
+  renderPatrols();
 }
-
-    const { data: vehicle } = await supabase
-      .from('vehicles')
-      .select('model, plate')
-      .eq('id', patrol.vehicle_id)
-      .single();
-
-    results.push({
-      ...patrol,
-      vehicle_model: vehicle?.model || '',
-      vehicle_plate: vehicle?.plate || '',
-      agents
-    });
-  }
 
   allPatrols = results;
   console.log("✅ allPatrols correctement construits :", allPatrols);
