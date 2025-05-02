@@ -534,11 +534,14 @@ function renderPatrols() {
       `).join('');
 
     div.innerHTML = `
-  <div class="patrol-agents">
-    <h3 class="font-bold text-white">👮 ${adjustPatrolName(patrol.unit_type, patrol.agents)} ${(patrol.agents.length > 0 && patrol.agents[0].badge) ? patrol.agents[0].badge : 'Inconnu'}</h3>
-    <div class="mt-2 text-white space-y-1">
-      ${patrol.agents.map(agent => `<div>👤 [${agent.badge}] ${agent.name}</div>`).join('')}
-    </div>
+  <div class="mt-2 text-white space-y-1">
+    ${
+      patrol.agents.length > 0
+      ? patrol.agents.map(agent =>
+        `<div>👤 [${agent.badge || '??'}] ${agent.name || 'Inconnu'}</div>`).join('')
+    : `<div class="italic text-gray-300">Aucun agent assigné</div>`
+  }
+</div>
   </div>
   <div class="flex flex-row gap-2 items-center justify-center flex-wrap">
     <select onchange="updateSector(${id}, this.value)" class="text-black bg-white p-1 rounded my-2">
