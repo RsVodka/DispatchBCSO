@@ -254,8 +254,8 @@ async function fetchPatrols() {
       )
     `);
 
-  if (error) {
-    console.error("Erreur chargement des patrouilles:", error);
+  if (patrolErr) {
+    console.error("Erreur chargement des patrouilles:", patrolErr);
     return;
   }
 
