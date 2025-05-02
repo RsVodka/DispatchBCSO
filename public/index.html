@@ -271,6 +271,7 @@ async function fetchPatrols() {
 
   allPatrols = results;
   console.log("✅ allPatrols correctement construits :", allPatrols);
+  console.log("🧩 Données agents pour chaque patrouille :", JSON.stringify(allPatrols, null, 2));
   renderPatrols();
 }
 
