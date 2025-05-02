@@ -1,18 +1,18 @@
-// ✅ agents.js + vehicles.js + patrols.js unifié - version Vercel-compatible
+// ✅ dispatch.js — version complète, corrigée et compatible Vercel avec gestion d'erreurs
 import { supabase } from '../lib/supabase';
 
 export default async function handler(req, res) {
   const { route } = req.query;
 
   // 🔹 Liste des agents
-  if route === 'agents' && req.method === 'GET') {
+  if (route === 'agents' && req.method === 'GET') {
     const { data, error } = await supabase.from('agents').select('*');
     if (error) return res.status(500).json({ error: error.message });
     return res.json(data);
   }
 
   // 🔹 Ajouter un agent
-  if route === 'agents' && req.method === 'POST') {
+  if (route === 'agents' && req.method === 'POST') {
     const { name, badge } = req.body;
     if (!name || !badge) return res.status(400).json({ error: 'Nom et matricule requis.' });
 
@@ -25,22 +25,22 @@ export default async function handler(req, res) {
   }
 
   // 🔹 Supprimer un agent
-  if route === 'agents' && req.method === 'DELETE') {
+  if (route === 'agents' && req.method === 'DELETE') {
     const { id } = req.query;
     const { error } = await supabase.from('agents').delete().eq('id', id);
     if (error) return res.status(500).json({ error: error.message });
-    return res.json({ success: true, id });
+    return res.json({ success: true });
   }
 
   // 🔹 Liste des véhicules
-  if route === 'vehicles' && req.method === 'GET') {
+  if (route === 'vehicles' && req.method === 'GET') {
     const { data, error } = await supabase.from('vehicles').select('*');
     if (error) return res.status(500).json({ error: error.message });
     return res.json(data);
   }
 
   // 🔹 Ajouter un véhicule
-  if route === 'vehicles' && req.method === 'POST') {
+  if (route === 'vehicles' && req.method === 'POST') {
     const { model, plate } = req.body;
     if (!model || !plate) return res.status(400).json({ error: 'Modèle et plaque requis.' });
 
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
   }
 
   // 🔹 Supprimer un véhicule
-  if route === 'vehicles') && req.method === 'DELETE') {
+  if (route === 'vehicles' && req.method === 'DELETE') {
     const { id } = req.query;
     const { error } = await supabase.from('vehicles').delete().eq('id', id);
     if (error) return res.status(500).json({ error: error.message });
@@ -58,7 +58,7 @@ export default async function handler(req, res) {
   }
 
   // 🔹 Supprimer un agent d'une patrouille
-  if route === 'remove-agent' && req.method === 'DELETE') {
+  if (route === 'remove-agent' && req.method === 'DELETE') {
     const { patrolId, agentId } = req.query;
     const { error } = await supabase.from('patrol_agents').delete().match({
       patrol_id: patrolId,
@@ -69,7 +69,7 @@ export default async function handler(req, res) {
   }
 
   // 🔹 Créer une patrouille
-  if route === 'patrols' && req.method === 'POST') {
+  if (route === 'patrols' && req.method === 'POST') {
     const { unit_type, agentIds, vehicleId } = req.body;
 
     const { data: patrolInsert, error: patrolErr } = await supabase
@@ -87,31 +87,65 @@ export default async function handler(req, res) {
     return res.json({ id: patrolId });
   }
 
-  // 🔹 Lister les patrouilles
-  if route === 'patrols' && req.method === 'GET') {
+  // 🔹 Lister les patrouilles (corrigé avec gestion des erreurs)
+  if (route === 'patrols' && req.method === 'GET') {
     const { data: patrols, error: patrolErr } = await supabase.from('patrols').select('*');
     if (patrolErr) return res.status(500).json({ error: patrolErr.message });
 
     const results = [];
 
     for (const patrol of patrols) {
-      const { data: links } = await supabase.from('patrol_agents').select('agent_id').eq('patrol_id', patrol.id);
+      const { data: links, error: linkErr } = await supabase
+        .from('patrol_agents')
+        .select('agent_id')
+        .eq('patrol_id', patrol.id);
+
+      if (linkErr) {
+        console.error('Erreur liens agents:', linkErr.message);
+        continue;
+      }
 
       const agents = [];
       for (const link of links || []) {
-        const { data: agent } = await supabase.from('agents').select('id, name, badge').eq('id', link.agent_id).single();
+        const { data: agent, error: agentErr } = await supabase
+          .from('agents')
+          .select('id, name, badge')
+          .eq('id', link.agent_id)
+          .single();
+
+        if (agentErr) {
+          console.warn(`Agent introuvable id=${link.agent_id}`);
+          continue;
+        }
+
         if (agent) agents.push(agent);
       }
 
-      const { data: vehicle } = await supabase.from('vehicles').select('model, plate').eq('id', patrol.vehicle_id).single();
+      let vehicle_model = '';
+      let vehicle_plate = '';
+
+      if (patrol.vehicle_id) {
+        const { data: vehicle, error: vehicleErr } = await supabase
+          .from('vehicles')
+          .select('model, plate')
+          .eq('id', patrol.vehicle_id)
+          .single();
+
+        if (vehicleErr) {
+          console.warn(`Véhicule introuvable id=${patrol.vehicle_id}`);
+        } else if (vehicle) {
+          vehicle_model = vehicle.model;
+          vehicle_plate = vehicle.plate;
+        }
+      }
 
       results.push({
         id: patrol.id,
         unit_type: patrol.unit_type,
         status: patrol.status,
         sector: patrol.sector,
-        vehicle_model: vehicle?.model || '',
-        vehicle_plate: vehicle?.plate || '',
+        vehicle_model,
+        vehicle_plate,
         agents
       });
     }
@@ -120,7 +154,7 @@ export default async function handler(req, res) {
   }
 
   // 🔹 Supprimer une patrouille
-  if route === 'patrols' && req.method === 'DELETE') {
+  if (route === 'patrols' && req.method === 'DELETE') {
     const { id } = req.query;
     await supabase.from('patrol_agents').delete().eq('patrol_id', id);
     const { error } = await supabase.from('patrols').delete().eq('id', id);
