@@ -233,7 +233,7 @@ async function fetchVehicles() {
 }
 
 async function fetchPatrols() {
-  const { data: patrols, error } = await supabase
+  const { data: patrols, error: patrolErr } = await supabase
     .from('patrols')
     .select(`
       id,
