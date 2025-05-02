@@ -253,7 +253,7 @@ async function fetchPatrols() {
       const { data: agent } = await supabase
         .from('agents')
         .select('id, name, badge')
-        .eq('id', link.agent_id)
+        .eq('id', parseInt(link.agent_id))
         .single();
       if (agent) agents.push(agent);
     }
