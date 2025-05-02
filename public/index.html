@@ -471,9 +471,11 @@ document.getElementById('patrolForm').addEventListener('submit', async (e) => {
 
   if (patrolErr || !data || !data[0]) {
     alert("Erreur création patrouille");
-    console.error(patrolErr);
+   console.error(patrolErr);
     return;
   }
+
+  const patrolId = data[0].id;
 
   const inserts = agents.map(agentId => ({ patrol_id: patrolId, agent_id: agentId }));
   console.log("🔗 Liaison agent/patrouille à insérer :", inserts);
@@ -482,7 +484,7 @@ document.getElementById('patrolForm').addEventListener('submit', async (e) => {
 
   if (linkErr) {
     console.error("💥 Erreur insert patrol_agents :", linkErr);
-   alert("Erreur assignation agents");
+    alert("Erreur assignation agents");
     return;
   }
 
