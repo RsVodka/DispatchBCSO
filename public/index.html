@@ -280,11 +280,6 @@ async function fetchPatrols() {
   renderPatrols();
 }
 
-  allPatrols = results;
-  console.log("✅ allPatrols correctement construits :", allPatrols);
-  renderPatrols(); // ← ici et uniquement ici
-}
-
 function renderAgentsDropdown() {
   const agentsList = document.getElementById('agentsList');
   agentsList.innerHTML = '';
