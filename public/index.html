@@ -534,7 +534,7 @@ function renderPatrols() {
 
     div.innerHTML = `
   <div class="patrol-agents">
-    <h3 class="font-bold text-white">👮 ${adjustPatrolName(patrol.unit_type, patrol.agents)} ${patrol.agents[0]?.badge || '??'}</h3>
+    <h3 class="font-bold text-white">👮 ${adjustPatrolName(patrol.unit_type, patrol.agents)} ${(patrol.agents.length > 0 && patrol.agents[0].badge) ? patrol.agents[0].badge : 'Inconnu'}</h3>
     <div class="mt-2 text-white space-y-1">
       ${patrol.agents.map(agent => `<div>👤 [${agent.badge}] ${agent.name}</div>`).join('')}
     </div>
