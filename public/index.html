@@ -233,7 +233,7 @@ async function fetchVehicles() {
 }
 
 async function fetchPatrols() {
-  const { data: patrols, error: patrolErr } = await supabase
+  const { data: patrols, error } = await supabase
     .from('patrols')
     .select(`
       id,
@@ -254,12 +254,12 @@ async function fetchPatrols() {
       )
     `);
 
-  if (patrolErr) {
-    console.error("❌ Erreur chargement des patrouilles:", patrolErr);
+  if (error) {
+    console.error("Erreur chargement des patrouilles:", error);
     return;
   }
 
-  const results = patrols.map(p => ({
+  const results = (patrols || []).map(p => ({
     id: p.id,
     unit_type: p.unit_type,
     status: p.status,
