@@ -233,48 +233,60 @@ async function fetchVehicles() {
 }
 
 async function fetchPatrols() {
-  const { data, error } = await supabase
-    .from('patrols')
-    .select(`
-      id,
-      unit_type,
-      status,
-      sector,
-      vehicle:vehicle_id (
-        id,
-        model,
-        plate
-      ),
-      patrol_agents (
-        agent:agent_id (
-          id,
-          name,
-          badge
-        )
-      )
-    `);
-
-  if (error) {
-    console.error("Erreur Supabase fetchPatrols:", error);
+  const { data: patrols, error: patrolErr } = await supabase.from('patrols').select('*');
+  if (patrolErr) {
+    console.error("Erreur chargement des patrouilles:", patrolErr);
     return;
   }
 
-  allPatrols = data.map(p => ({
-    id: p.id,
-    unit_type: p.unit_type,
-    status: p.status,
-    sector: p.sector,
-    vehicle_model: p.vehicle?.model || '',
-    vehicle_plate: p.vehicle?.plate || '',
-    agents: (p.patrol_agents || [])
-      .filter(pa => pa.agent)
-      .map(pa => ({
-        id: pa.agent.id,
-        name: pa.agent.name,
-        badge: pa.agent.badge
-      }))
-  }));
+  const results = [];
 
+  for (const patrol of patrols) {
+    // Récupérer les liens agent_id de cette patrouille
+    const { data: links, error: linkErr } = await supabase
+      .from('patrol_agents')
+      .select('agent_id')
+      .eq('patrol_id', patrol.id);
+
+    if (linkErr) {
+      console.error(`Erreur chargement agents pour patrouille ${patrol.id}:`, linkErr);
+      continue;
+    }
+
+    // Récupérer les données complètes des agents
+    const agents = [];
+    for (const link of links) {
+      const { data: agent } = await supabase
+        .from('agents')
+        .select('id, name, badge')
+        .eq('id', link.agent_id)
+        .single();
+      if (agent) agents.push(agent);
+    }
+
+    // Récupérer le véhicule lié
+    let vehicle = null;
+    if (patrol.vehicle_id) {
+      const { data: vehicleData } = await supabase
+        .from('vehicles')
+        .select('model, plate')
+        .eq('id', patrol.vehicle_id)
+        .single();
+      vehicle = vehicleData;
+    }
+
+    results.push({
+      id: patrol.id,
+      unit_type: patrol.unit_type,
+      status: patrol.status,
+      sector: patrol.sector,
+      vehicle_model: vehicle?.model || '',
+      vehicle_plate: vehicle?.plate || '',
+      agents: agents
+    });
+  }
+
+  allPatrols = results;
   renderPatrols();
 }
 
