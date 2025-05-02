@@ -2,17 +2,17 @@
 import { supabase } from '../lib/supabase';
 
 export default async function handler(req, res) {
-  const url = req.url;
+  const { route } = req.query;
 
   // 🔹 Liste des agents
-  if (url.startsWith('/api/agents') && req.method === 'GET') {
+  if route === 'agents' && req.method === 'GET') {
     const { data, error } = await supabase.from('agents').select('*');
     if (error) return res.status(500).json({ error: error.message });
     return res.json(data);
   }
 
   // 🔹 Ajouter un agent
-  if (url.startsWith('/api/agents') && req.method === 'POST') {
+  if route === 'agents' && req.method === 'POST') {
     const { name, badge } = req.body;
     if (!name || !badge) return res.status(400).json({ error: 'Nom et matricule requis.' });
 
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   }
 
   // 🔹 Supprimer un agent
-  if (url.startsWith('/api/agents') && req.method === 'DELETE') {
+  if route === 'agents' && req.method === 'DELETE') {
     const { id } = req.query;
     const { error } = await supabase.from('agents').delete().eq('id', id);
     if (error) return res.status(500).json({ error: error.message });
@@ -33,14 +33,14 @@ export default async function handler(req, res) {
   }
 
   // 🔹 Liste des véhicules
-  if (url.startsWith('/api/vehicles') && req.method === 'GET') {
+  if route === 'vehicles' && req.method === 'GET') {
     const { data, error } = await supabase.from('vehicles').select('*');
     if (error) return res.status(500).json({ error: error.message });
     return res.json(data);
   }
 
   // 🔹 Ajouter un véhicule
-  if (url.startsWith('/api/vehicles') && req.method === 'POST') {
+  if route === 'vehicles' && req.method === 'POST') {
     const { model, plate } = req.body;
     if (!model || !plate) return res.status(400).json({ error: 'Modèle et plaque requis.' });
 
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
   }
 
   // 🔹 Supprimer un véhicule
-  if (url.startsWith('/api/vehicles') && req.method === 'DELETE') {
+  if route === 'vehicles') && req.method === 'DELETE') {
     const { id } = req.query;
     const { error } = await supabase.from('vehicles').delete().eq('id', id);
     if (error) return res.status(500).json({ error: error.message });
@@ -58,7 +58,7 @@ export default async function handler(req, res) {
   }
 
   // 🔹 Supprimer un agent d'une patrouille
-  if (url.includes('/remove-agent') && req.method === 'DELETE') {
+  if route === 'remove-agent' && req.method === 'DELETE') {
     const { patrolId, agentId } = req.query;
     const { error } = await supabase.from('patrol_agents').delete().match({
       patrol_id: patrolId,
@@ -69,7 +69,7 @@ export default async function handler(req, res) {
   }
 
   // 🔹 Créer une patrouille
-  if (url.startsWith('/api/patrols') && req.method === 'POST') {
+  if route === 'patrols' && req.method === 'POST') {
     const { unit_type, agentIds, vehicleId } = req.body;
 
     const { data: patrolInsert, error: patrolErr } = await supabase
@@ -88,7 +88,7 @@ export default async function handler(req, res) {
   }
 
   // 🔹 Lister les patrouilles
-  if (url.startsWith('/api/patrols') && req.method === 'GET') {
+  if route === 'patrols' && req.method === 'GET') {
     const { data: patrols, error: patrolErr } = await supabase.from('patrols').select('*');
     if (patrolErr) return res.status(500).json({ error: patrolErr.message });
 
@@ -120,7 +120,7 @@ export default async function handler(req, res) {
   }
 
   // 🔹 Supprimer une patrouille
-  if (url.startsWith('/api/patrols') && req.method === 'DELETE') {
+  if route === 'patrols' && req.method === 'DELETE') {
     const { id } = req.query;
     await supabase.from('patrol_agents').delete().eq('patrol_id', id);
     const { error } = await supabase.from('patrols').delete().eq('id', id);
