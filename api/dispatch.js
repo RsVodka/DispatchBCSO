@@ -1,4 +1,5 @@
-// ✅ dispatch.js — version complète, robuste et compatible Vercel
+console.log("✅ API dispatch.js appelée — route:", req.query.route);
+
 import { supabase } from '../lib/supabase';
 
 export default async function handler(req, res) {
