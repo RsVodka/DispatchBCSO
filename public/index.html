@@ -475,12 +475,14 @@ document.getElementById('patrolForm').addEventListener('submit', async (e) => {
     return;
   }
 
-  const patrolId = data[0].id;
   const inserts = agents.map(agentId => ({ patrol_id: patrolId, agent_id: agentId }));
+  console.log("🔗 Liaison agent/patrouille à insérer :", inserts);
+
   const { error: linkErr } = await supabase.from('patrol_agents').insert(inserts);
+
   if (linkErr) {
-    alert("Erreur assignation agents");
-    console.error(linkErr);
+    console.error("💥 Erreur insert patrol_agents :", linkErr);
+   alert("Erreur assignation agents");
     return;
   }
 
